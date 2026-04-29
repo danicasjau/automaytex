@@ -12,9 +12,9 @@ class configuration:
     ip_adapter_scale = 0.7
 
     resolution = 1024
-    num_inference_steps = 30
+    num_inference_steps = 16
     guidance_scale = 7.5
-    seed = 42353425345
+    seed = 123456789
 
  
     temporal_path = f"{base_dir}/output2/temp"
