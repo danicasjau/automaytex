@@ -29,6 +29,10 @@ class mapsMaterialGenerator():
         normal_path = self.create_normalMap(height_path)
         
         print("[Info] Material maps created successfully in:", self.output_path)
+
+        diffuse_path = cv2.imread(diffuse_path)
+        cv2.imwrite(os.path.join(self.output_path, "diffuse_2.png"), diffuse_path)
+
         return {
             "diffuse": diffuse_path,
             "roughness": roughness_path,
@@ -52,6 +56,7 @@ class mapsMaterialGenerator():
             )
             return out_file
         else:
+            self.diffuseImagePath = image_path
             return image_path
 
     def create_roughnessMap(self, image_path):
@@ -68,6 +73,9 @@ class mapsMaterialGenerator():
         roughness = cv2.addWeighted(roughness, 0.7, np.full_like(roughness, 128), 0.3, 0)
         
         cv2.imwrite(out_file, roughness)
+
+        self.roughnessImagePath = out_file
+
         return out_file
 
 
@@ -83,6 +91,9 @@ class mapsMaterialGenerator():
         # Assuming most generated surfaces are dielectric by default
         metalness = np.zeros_like(gray)
         cv2.imwrite(out_file, metalness)
+
+        self.metalnessImagePath = out_file
+
         return out_file
 
     def create_normalMap(self, image_path):
@@ -104,8 +115,13 @@ class mapsMaterialGenerator():
             base_normals = cv2.imread(self.initial_normalCollageImagePath)
             base_normals_rgb = cv2.cvtColor(base_normals, cv2.COLOR_BGR2RGB)
             
+            BLUR_SIZE = 99
             # --- Apply Gaussian Blur to Base Normals ---
-            base_normals_rgb = cv2.GaussianBlur(base_normals_rgb, (5, 5), 0)
+            base_normals_rgb = cv2.GaussianBlur(base_normals_rgb, (BLUR_SIZE, BLUR_SIZE), 0)
+            
+            target_shape = (detail_normals.shape[1], detail_normals.shape[0])
+            if base_normals_rgb.shape[:2] != detail_normals.shape[:2]:
+                base_normals_rgb = cv2.resize(base_normals_rgb, target_shape, interpolation=cv2.INTER_LINEAR)
             
             final_normals_rgb = generator.blend_rnm(base_normals_rgb, detail_normals)
             final_normals = cv2.cvtColor(final_normals_rgb, cv2.COLOR_RGB2BGR)
@@ -113,6 +129,7 @@ class mapsMaterialGenerator():
             final_normals = cv2.cvtColor(detail_normals, cv2.COLOR_RGB2BGR)
             
         cv2.imwrite(out_file, final_normals)
+        self.normalImagePath = out_file
         return out_file
 
     def create_heightMap(self, image_path):
@@ -136,10 +153,20 @@ class mapsMaterialGenerator():
         generator = PBRMapGenerator()
         height = generator.generate_height_map(diffuse, roughness, metalness)
         cv2.imwrite(out_file, height)
+        self.heightImagePath = out_file
         return out_file
 
     def setOutputPath(self, output_path):
         self.output_path = output_path
+
+    def getFiles(self):
+        return {
+            "diffuse": self.diffuseImagePath,
+            "roughness": self.roughnessImagePath,
+            "metalness": self.metalnessImagePath,
+            "height": self.heightImagePath,
+            "normal": self.normalImagePath
+        }
 
 
 class PBRMapGenerator:

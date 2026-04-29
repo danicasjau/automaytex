@@ -45,10 +45,10 @@ class geoExtractionPipeline:
         self.selection = cmds.ls(sl=True, long=True)
 
         # Flags
-        self.renderImages = False    
-        self.diffuseGeneration = False
+        self.renderImages = True    
+        self.diffuseGeneration = True
         self.upscaleTextures = True
-        self.fixSeams = False
+        self.fixSeams = True
 
         # Initialize Extractors and Generators
         self.extractor = GeometryPlanarExtractor(
@@ -91,21 +91,21 @@ class geoExtractionPipeline:
         print("\n--- 3. Building Collages ---")
         return self.prep.run()
 
-    def retarget_depth(self, depth_collage_path):
-        print("\n--- 4. Retargeting Depth to Original UVs ---")
+    def retarget_normal(self, normal_collage_path):
+        print("\n--- 4. Retargeting Normal to Original UVs ---")
 
         splitter = CollageSplitter(
-            collage_path=depth_collage_path,
-            material_name="depth_source",
+            collage_path=normal_collage_path,
+            material_name="normal_source",
             output_root=self.config.output_path,
             output_size=self.config.resolution
         )
-        depth_udim_tiles = splitter.run()
+        normal_udim_tiles = splitter.run()
 
-        self.retarget_tool.setMaterialTextures(depth_udim_tiles)
+        self.retarget_tool.setMaterialTextures(normal_udim_tiles)
         self.retarget_tool.retargetToOriginalUV(resolution=self.config.resolution)
 
-        depth_tiles = []
+        normal_tiles = []
         raw_tiles = glob.glob(os.path.join(self.config.output_path, "retarget_*.png"))
         
         for f in raw_tiles:
@@ -116,21 +116,23 @@ class geoExtractionPipeline:
                 if os.path.exists(new_path):
                     os.remove(new_path)
                 os.rename(f, new_path)
-                depth_tiles.append(new_path)
+                normal_tiles.append(new_path)
         
-        print(f"[Info] Generated {len(depth_tiles)} retargeted depth tiles.")
-        return depth_tiles
+        print(f"[Info] Generated {len(normal_tiles)} retargeted normal tiles.")
+        return normal_tiles
 
-    def generate_diffuse_textures(self, depth_tiles):
+    def generate_diffuse_textures(self, normal_tiles):
         print("\n--- 5. AI Diffusion Generation (per UDIM) ---")
-        if not self.diffuseGeneration or not depth_tiles:
+        if not self.diffuseGeneration or not normal_tiles:
             return []
+
+        print("normal tiles", normal_tiles)
 
         diffuse_files = []
         python_exe = self.config.python_exe
         script_path = os.path.join(self.config.base_dir, self.config.script_name)
 
-        for depth_tile in depth_tiles:
+        for depth_tile in normal_tiles:
             udim_match = re.search(r"10\d{2}", os.path.basename(depth_tile))
             udim = udim_match.group() if udim_match else "1001"
             output_path = os.path.join(self.config.output_path, f"diffuse_{udim}.png")
@@ -139,12 +141,13 @@ class geoExtractionPipeline:
             try:
                 subprocess.run([
                     python_exe, script_path,
-                    "--prompt", self.config.prompt,
-                    "--depth", depth_tile,
+                    depth_tile,
+                    "--positive-prompt", self.config.prompt,
+                    "--negative-prompt", self.config.negative_prompt,
                     "--output", output_path,
-                    "--cols", "1",
-                    "--rows", "1",
-                    "--mode", "collage" # Treat single tile as a collage to avoid internal splitting
+                    "--steps", str(self.config.num_inference_steps),
+                    "--cfg", str(self.config.guidance_scale),
+                    "--seed", str(self.config.seed)
                 ], check=True)
                 
                 if os.path.exists(output_path):
@@ -208,19 +211,18 @@ class geoExtractionPipeline:
             print(f"[Warning] Upscaling failed: {e}")
             return tiles
 
-    def assign_material(self, tiles):
+    def assign_material(self, image_dict):
         """Step 8: Create and assign the final material to the Maya object."""
         print("\n--- 8. Applying Final Material ---")
-        if not tiles or not self.selection:
+        if not image_dict or not self.selection:
             return
 
-        final_1001 = next((p for p in tiles if "1001" in p), tiles[0])
         mat_creator = autoMaMaterial(config=self.config)
         mat_creator.mName = "AI_Wooden_Final_MAT"
         mat_creator.mObject = self.selection
 
         mat_creator.create()
-        mat_creator.connectImage(final_1001, slot="diffuse", udim=True)
+        mat_creator.connectImages(image_dict, udim=True)
         mat_creator.assign_to_object()
 
     def run(self):
@@ -232,38 +234,34 @@ class geoExtractionPipeline:
 
         print("\n====== Starting Geo-Extraction Expo Pipeline ======")
         
-        self.retarget_tool.getOriginalUV() # Capture original UVs before projection
-
+        self.retarget_tool.getOriginalUV()
+        
         self.bake_exrs()
 
         self.setup_uvs()
 
         outputs = self.create_collages()
-        depth_path = outputs.get("depth")
+        normal_path = outputs.get("normals")
+        print(outputs)
 
-        impost_path = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\output\collage_normals.png"
-
-        normal_tiles = self.retarget_depth(impost_path)
+        print("normal path", normal_path)
+        
+        normal_tiles = self.retarget_normal(normal_path)
 
         diffuse_files = self.generate_diffuse_textures(normal_tiles)
-
-        diffuse_files = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\output\main.png"
 
         print("\nGENERATION COMPLEATED: diffuse_files:", diffuse_files)
 
         # fixed_files = self.apply_seam_fixing(diffuse_files)
-        # upscaled_files = self.upscale_textures(diffuse_files)
 
-        # Apply roughness from the original normal map
-        print("\n--- 7. Applying roughness from the original normal map ---")
-        print("upscaled_files:", diffuse_files)
-        print("normal_tiles:", normal_tiles)
+        upscaled_files = self.upscale_textures(diffuse_files)
 
-        mtl = mapsMaterialGenerator(diffuse_files, normal_tiles[0])
-        mtl.setOutputPath("D:\\DANI\\PROJECTS_2026\\AutoTexturingMaya\\automaytex\\texturesOutputMain")
+        mtl = mapsMaterialGenerator(upscaled_files[0], normal_tiles[0])
+        mtl.setOutputPath(self.config.output_path)
         mtl.create()
 
-        self.assign_material(diffuse_files)
+
+        self.assign_material(mtl.getFiles())
 
         print("\n====== Pipeline Complete ======")
         print(f"Final UDIM Tiles: {len(diffuse_files)}")

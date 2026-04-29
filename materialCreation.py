@@ -53,6 +53,23 @@ class autoMaMaterial:
             # Set UDIM tiling mode (Mari convention = 3)
             cmds.setAttr(file_node + ".uvTilingMode", 3)
 
+        if slot == "normal":
+            bump_node = cmds.shadingNode("bump2d", asUtility=True)
+            cmds.setAttr(bump_node + ".bumpInterp", 1) # Tangent Space Normal
+            cmds.connectAttr(file_node + ".outAlpha", bump_node + ".bumpValue", force=True)
+            cmds.connectAttr(bump_node + ".outNormal", self.material + ".normalCamera", force=True)
+            try: cmds.setAttr(file_node + ".colorSpace", "Raw", type="string")
+            except: pass
+            return
+
+        if slot == "height":
+            disp_node = cmds.shadingNode("displacementShader", asShader=True)
+            cmds.connectAttr(file_node + ".outAlpha", disp_node + ".displacement", force=True)
+            cmds.connectAttr(disp_node + ".displacement", self.shading_group + ".displacementShader", force=True)
+            try: cmds.setAttr(file_node + ".colorSpace", "Raw", type="string")
+            except: pass
+            return
+
         slot_map = {
             "diffuse": (".baseColor", True),
             "albedo": (".baseColor", True),
@@ -67,10 +84,20 @@ class autoMaMaterial:
 
         attr, is_color = slot_map[slot]
 
+        if not is_color:
+            try: cmds.setAttr(file_node + ".colorSpace", "Raw", type="string")
+            except: pass
+
         if is_color:
             cmds.connectAttr(file_node + ".outColor", self.material + attr, force=True)
         else:
+            # For grayscale, often outColorR or outAlpha is used. In Maya standardSurface it's usually outColorR or outAlpha
             cmds.connectAttr(file_node + ".outAlpha", self.material + attr, force=True)
+
+    def connectImages(self, image_dict, udim=False):
+        for slot, image_path in image_dict.items():
+            if image_path:
+                self.connectImage(image_path, slot=slot, udim=udim)
 
     def assign_to_object(self):
         if not self.mObject:

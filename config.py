@@ -14,20 +14,20 @@ class configuration:
     resolution = 1024
     num_inference_steps = 30
     guidance_scale = 7.5
+    seed = 42353425345
 
-    negative_prompt = "blurry, low quality, distorted, shadow, lighting gradients"
+ 
+    temporal_path = f"{base_dir}/output2/temp"
+    output_path = f"{base_dir}/output2"
 
-    temporal_path = f"{base_dir}/temp"
-    output_path = f"{base_dir}/output"
-
-    prompt = "8K ultra-detailed seamless texture of weathered rusted metal, industrial surface, realistic corrosion, peeling paint, scratches, grunge, high dynamic range, photorealistic, evenly lit, tileable, no seams"
+    prompt = "8K ultra-detailed seamless texture of white wood paneling, no seams, tileable, photorealistic"
     negative_prompt = "blurry, low quality, distorted, shadow, lighting gradients"
 
     face_order = ["front", "left", "top", "back", "right", "bottom"]
         
         
     python_exe = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Scripts\python.exe"
-    script_name = "mPiplineCreation.py"
+    script_name = "mPiplineCreationSDXL.py"
 
     view_rotations = {
             "front":  ( 0,    0, 0),
