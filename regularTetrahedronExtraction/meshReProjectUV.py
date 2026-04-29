@@ -12,50 +12,7 @@ except ImportError:
 from PIL import Image
 
 
-# ---------------------------------------------------------------------------
-# UVRetargetTool
-# ---------------------------------------------------------------------------
-# Purpose
-# -------
-# Reprojects (bakes) textures from one UV layout (current/source, "UV2") onto
-# a stored original UV layout ("UV1") for the same piece of geometry.
-#
-# Pipeline overview
-# -----------------
-#   1. getOriginalUV()          – snapshot UV1 from the mesh
-#   2. setMaterialTextures()    – tell the tool where the source images live
-#   3. retargetToOriginalUV()   – bake UV2→UV1 and write ./output/*.png
-#
-# Mathematical foundation
-# -----------------------
-# For every triangle the mesh is parameterised twice:
-#   • T_dst  – the triangle in UV1 space  (defines where we WRITE)
-#   • T_src  – the same triangle in UV2 space (defines where we READ)
-#
-# For every pixel p that falls inside T_dst:
-#   1. Compute barycentric coords (α, β, γ) so that p = α·v0 + β·v1 + γ·v2
-#   2. Reconstruct the UV2 sample point  q = α·s0 + β·s1 + γ·s2
-#   3. Sample the source texture at q  (bilinear interpolation)
-#   4. Write the colour to the output image at p
-#
-# UDIM convention: tile = 1001 + floor(u) + 10·floor(v)
-# ---------------------------------------------------------------------------
-
 class UVRetargetTool:
-    """
-    UV texture reprojection tool for Maya meshes.
-
-    Parameters
-    ----------
-    mesh : str
-        Maya DAG path of the target mesh.
-    output_dir : str, optional
-        Directory for output textures.  Defaults to config.output_path.
-    config : object, optional
-        Configuration object.  Must expose ``output_path`` and
-        ``retarget_uv_set_name``.
-    """
-
     def __init__(self, mesh, output_dir=None, config=None):
         if config is None:
             from config import configuration          # type: ignore[import]
@@ -78,20 +35,6 @@ class UVRetargetTool:
     # ------------------------------------------------------------------
 
     def getOriginalUV(self, uv_set: str | None = None) -> None:
-        """
-        Snapshot the current UV layout of ``self.mesh`` into
-        ``self.original_uvs`` so it can be restored later.
-
-        Stores
-        ------
-        self.original_uvs : dict
-            Keys: ``u``, ``v``          – flat UV coordinate arrays
-                  ``uvCounts``           – per-face vertex counts
-                  ``uvIds``              – per-face-vertex UV indices
-                  ``uv_set``             – name of the captured UV set
-        self.original_uv_set : str
-            Name of the captured UV set.
-        """
         if not MAYA_AVAILABLE:
             raise RuntimeError("Maya is not available in this environment.")
 
@@ -133,16 +76,6 @@ class UVRetargetTool:
     # ------------------------------------------------------------------
 
     def setMaterialTextures(self, texturesPaths: list[str]) -> None:
-        """
-        Register the source texture paths.
-
-        Parameters
-        ----------
-        texturesPaths : list[str]
-            Each entry is either a concrete path (``diffuse_1001.png``) or a
-            UDIM template that contains the literal token ``<UDIM>``
-            (e.g. ``/tex/diffuse.<UDIM>.png``).
-        """
         self.texturesPaths = list(texturesPaths)
 
     # ------------------------------------------------------------------
@@ -271,30 +204,6 @@ class UVRetargetTool:
     # ------------------------------------------------------------------
 
     def retargetToOriginalUV(self, resolution: int = 1024) -> None:
-        """
-        Bake source textures from the current (UV2) layout into the original
-        (UV1) layout and write the result to ``self.output_dir``.
-
-        Parameters
-        ----------
-        resolution : int
-            Output image resolution (pixels per UV tile side).
-
-        Algorithm
-        ---------
-        For every mesh triangle:
-          • T_dst = triangle vertices in UV1  → defines where we write
-          • T_src = triangle vertices in UV2  → defines where we read
-
-        For each pixel p inside T_dst (raster-space bounding box):
-          1. Convert p → UV1 coordinate
-          2. Barycentric decomposition inside T_dst
-          3. Interpolate UV2 sample point
-          4. Bilinear-sample the source texture
-          5. Write to the appropriate output tile
-
-        After rasterisation a 1-pixel dilation pass fills seam gaps.
-        """
         if not MAYA_AVAILABLE:
             raise RuntimeError("Maya is not available.")
 
@@ -419,19 +328,7 @@ class UVRetargetTool:
         dst_images: dict[int, Image.Image],
         resolution: int,
     ) -> None:
-        """
-        Iterate every pixel whose centre falls inside *tri_dst* (UV1 space),
-        compute the corresponding UV2 sample point, bilinear-sample the source
-        image, and write the colour to the destination tile.
 
-        The key fix vs. the original implementation
-        -------------------------------------------
-        The original code computed ``u_global / v_global`` by dividing the
-        *already resolution-scaled* integer pixel coordinates by ``resolution``
-        again, which effectively discarded the UDIM offset embedded in the raw
-        UV coordinates.  Here we work entirely in UV space and convert to
-        pixel space only for the final read/write.
-        """
         # Bounding box in UV space (may span multiple UDIM tiles)
         min_u = min(p[0] for p in tri_dst)
         max_u = max(p[0] for p in tri_dst)

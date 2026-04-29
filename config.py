@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+
+
 @dataclass
 class configuration:
     base_dir = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex"
@@ -12,14 +14,16 @@ class configuration:
     ip_adapter_scale = 0.7
 
     resolution = 1024
+
+
     num_inference_steps = 16
     guidance_scale = 7.5
     seed = 123456789
 
- 
-    temporal_path = f"{base_dir}/output2/temp"
-    output_path = f"{base_dir}/output2"
-
+    name_generatioin = "testoutput"
+    output_path = f"{base_dir}/{name_generatioin}"
+    temporal_path = f"{output_path}/temp"
+    
     prompt = "8K ultra-detailed seamless texture of white wood paneling, no seams, tileable, photorealistic"
     negative_prompt = "blurry, low quality, distorted, shadow, lighting gradients"
 

@@ -18,6 +18,9 @@ import materialCreation
 import reUvPorjection
 import mtlMaterialMapsCreation
 
+from regularTetrahedronExtraction import meshCollage_generator as mg
+from regularTetrahedronExtraction import meshTetrahedron_render as mr
+
 # Reload modules for development
 importlib.reload(config)
 importlib.reload(geoPlanarExtraction)
@@ -28,6 +31,9 @@ importlib.reload(materialCreation)
 importlib.reload(reUvPorjection)
 importlib.reload(mtlMaterialMapsCreation)
 
+importlib.reload(mg)
+importlib.reload(mr)
+
 from config import configuration
 from geoPlanarExtraction import GeometryPlanarExtractor
 from exrCollageGenerator import EXRCollageGenerator
@@ -37,11 +43,15 @@ from materialCreation import autoMaMaterial
 from reUvPorjection import UVRetargetTool
 from mtlMaterialMapsCreation import mapsMaterialGenerator
 
+from regularTetrahedronExtraction import meshCollage_generator as mg
+from regularTetrahedronExtraction import meshTetrahedron_render as mr
+
 import maya.cmds as cmds
 
 class geoExtractionPipeline:
     def __init__(self):
         self.config = configuration()
+
         self.selection = cmds.ls(sl=True, long=True)
 
         # Flags
@@ -90,6 +100,28 @@ class geoExtractionPipeline:
     def create_collages(self):
         print("\n--- 3. Building Collages ---")
         return self.prep.run()
+
+    def extract_full_meshRender(self):
+        FACE_ORDER = ["face_0", "face_1", "face_2", "face_3"]
+
+        extractor = mr.GeometryPlanarExtractor(
+            export_path=self.config.temporal_path,
+            resolution=self.config.resolution/2,
+        )
+        extractor.run()
+        
+        images = [os.path.join(self.config.temporal_path, f"{face}.exr") for face in FACE_ORDER]
+        
+        gen = mg.EXRCollageGenerator(
+            image_paths      = images,
+            save_path        = self.config.output_path,
+            depth_saturation = self.config.depth_saturation,
+            resize_to        = self.config.resolution,
+        )
+
+        outputs = gen.run()
+
+        return outputs
 
     def retarget_normal(self, normal_collage_path):
         print("\n--- 4. Retargeting Normal to Original UVs ---")
@@ -236,16 +268,14 @@ class geoExtractionPipeline:
         
         self.retarget_tool.getOriginalUV()
         
-        self.bake_exrs()
+        # self.bake_exrs()
+        # self.setup_uvs()
+        # self.create_collages()
 
-        self.setup_uvs()
+        outputs = self.extract_full_meshRender()
 
-        outputs = self.create_collages()
         normal_path = outputs.get("normals")
-        print(outputs)
 
-        print("normal path", normal_path)
-        
         normal_tiles = self.retarget_normal(normal_path)
 
         diffuse_files = self.generate_diffuse_textures(normal_tiles)
@@ -259,7 +289,6 @@ class geoExtractionPipeline:
         mtl = mapsMaterialGenerator(upscaled_files[0], normal_tiles[0])
         mtl.setOutputPath(self.config.output_path)
         mtl.create()
-
 
         self.assign_material(mtl.getFiles())
 
