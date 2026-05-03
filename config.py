@@ -1,3 +1,6 @@
+# automaytex\config.py
+# CONFIGURATION .py file
+
 from dataclasses import dataclass
 
 @dataclass
@@ -18,11 +21,21 @@ class validation:
 
 
 @dataclass
+class paths:
+    BASE_DIR = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex"
+    python_exe = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Scripts\python.exe"
+
+    # MODELS PATHS
+    base_model = r"E:\Program Files\ComfyUI\ComfyUI\models\checkpoints\juggernautXL_v9Rdphoto2Lightning.safetensors"
+    controlnet = r"E:\Program Files\ComfyUI\ComfyUI\models\controlnet\diffusion_pytorch_model_promaxx.safetensors"
+    depth_model = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\models\depth_anything_vitl14"
+
+
+@dataclass
 class configuration:
 
-    BASE_DIR = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex"
+    # System Paths
 
-    python_exe = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Scripts\python.exe"
     script_name = "mPiplineCreationSDXL.py"
 
     # MODELS PATHS
@@ -42,10 +55,9 @@ class configuration:
  
     material_name = f"material01"
 
-    temporal_path = f"{BASE_DIR}/output/{material_name}/temp"
-    textures_path = f"{BASE_DIR}/output/{material_name}/textures"
-
-    output_path = f"{BASE_DIR}/output/{material_name}"
+    temporal_path = f"{paths.BASE_DIR}/output/{material_name}/temp"
+    textures_path = f"{paths.BASE_DIR}/output/{material_name}/textures"
+    output_path = f"{paths.BASE_DIR}/output/{material_name}"
 
     # GENERATION
     # -- gui editable variables start --

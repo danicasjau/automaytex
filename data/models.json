@@ -1,0 +1,28 @@
+{
+    "models": [
+        {
+            "id": 1,
+            "name": "sdxl",
+            "model_name": "Juggernaut XL v9",
+            "hugging_face_url": "https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/resolve/main/juggernautXL_v9Rdphoto2Lightning.safetensors",
+            "download_name": "juggernautXL_v9Rdphoto2Lightning.safetensors",
+            "installation_path": "E:/Program Files/ComfyUI/ComfyUI/models/checkpoints/"
+        },
+        {
+            "id": 2,
+            "name": "controlnet",
+            "model_name": "ControlNet Union SDXL",
+            "hugging_face_url": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/main/diffusion_pytorch_model_promaxx.safetensors",
+            "download_name": "diffusion_pytorch_model_promaxx.safetensors",
+            "installation_path": "E:/Program Files/ComfyUI/ComfyUI/models/controlnet/"
+        },
+        {
+            "id": 3,
+            "name": "depth",
+            "model_name": "Depth Anything ViT-L14",
+            "hugging_face_url": "https://huggingface.co/LiheYoung/depth-anything-vitl14/tree/main",
+            "download_name": "depth_anything_vitl14",
+            "installation_path": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/models/"
+        }
+    ]
+}

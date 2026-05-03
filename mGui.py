@@ -1,5 +1,5 @@
 
-# mayautotex - auto texturing for maya - pipline integration
+# mayautotex - auto texturing for maya - pipline integration - GUI
 # daniel casadevall jauhiainen
 
 """ IMPORTING LIBRARIES """
@@ -34,7 +34,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 
-from lmodels import lModels
+from cModels import lModels
 from config import configuration
 
 try:

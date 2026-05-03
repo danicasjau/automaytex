@@ -2,313 +2,1361 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AUTOMAYTEX Documentation | Daniel Casadevall</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AUTOMAYTEX — Technical Documentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+            options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
         :root {
-            --sidebar-width: 280px;
-            --primary-color: #ec8a22;
-            --secondary-color: #2563eb;
-            --text-main: #1d242f;
-            --text-light: #414b58;
-            --bg-light: #f8fafc;
-            --border-color: #e2e8f0;
-            --code-bg: #1e293b;
+            --orange: #c85a10;
+            --orange-bg: #fdf4ee;
+            --sidebar: 230px;
+            --serif: 'Crimson Pro', Georgia, serif;
+            --sans: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
         }
 
         body {
-            font-family: 'IBM Plex Mono', 'Segoe UI', monospace;
-            margin: 0;
+            background: #fff;
+            color: #1a1a1a;
+            font-family: var(--serif);
+            font-size: 17.5px;
+            line-height: 1.75;
             display: flex;
-            color: var(--text-main);
-            line-height: 1.6;
         }
 
-        /* Sidebar Styling */
+        /* SIDEBAR */
         #sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            background: var(--bg-light);
-            border-right: 1px solid var(--border-color);
+            width: var(--sidebar);
+            min-height: 100vh;
             position: fixed;
+            top: 0;
+            left: 0;
+            border-right: 1px solid #dedede;
+            background: #f9f9f9;
+            padding: 30px 18px 60px;
             overflow-y: auto;
-            padding: 20px;
+            font-family: var(--sans);
         }
 
-        #logo-container {
-            text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
+        .sb-logo {
+            display: block;
+            width: 80%;
+            margin-bottom: 14px;
+        }
+
+        .sb-title {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--orange);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .sb-sub {
+            font-size: 0.67rem;
+            color: #999;
+            line-height: 1.6;
+            margin-bottom: 26px;
+        }
+
+        .sb-group {
             margin-bottom: 20px;
         }
 
-        #logo-container h1 {
-            font-size: 1.2rem;
-            margin: 10px 0 0;
-            color: var(--primary-color);
-            letter-spacing: 2px;
-        }
-
-        .nav-group {
-            margin-bottom: 25px;
-        }
-
-        .nav-group h3 {
-            font-size: 0.75rem;
+        .sb-group-label {
+            font-size: 0.58rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: var(--text-light);
-            letter-spacing: 0.1em;
-            margin-bottom: 10px;
+            color: #bbb;
+            margin-bottom: 7px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #e5e5e5;
         }
 
-        .nav-group ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .nav-group li {
-            margin-bottom: 8px;
-        }
-
-        .nav-group a {
+        .sb-group a {
+            display: block;
             text-decoration: none;
-            color: var(--text-main);
-            font-size: 0.9rem;
-            transition: color 0.2s;
+            color: #555;
+            font-size: 0.73rem;
+            padding: 2px 0;
+            line-height: 1.55;
+            transition: color 0.12s;
         }
 
-        .nav-group a:hover {
-            color: var(--primary-color);
+        .sb-group a:hover {
+            color: var(--orange);
         }
 
-        /* Main Content */
-        #content {
-            margin-left: var(--sidebar-width);
-            padding: 40px 80px;
-            max-width: 1000px;
+        .sb-group a .n {
+            color: var(--orange);
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            margin-right: 3px;
         }
 
+        /* MAIN */
+        #main {
+            margin-left: var(--sidebar);
+            padding: 60px 88px 100px 72px;
+            max-width: 840px;
+            width: 100%;
+        }
+
+        /* HEADER */
+        .doc-header {
+            border-bottom: 2px solid #111;
+            padding-bottom: 30px;
+            margin-bottom: 44px;
+        }
+
+        .doc-header img {
+            display: block;
+            /* height: 256px;  */
+            width: 100%;
+            margin-bottom: 18px;
+        }
+
+        .doc-title {
+            font-family: var(--mono);
+            font-size: 2.05rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            margin-bottom: 5px;
+        }
+
+        .doc-subtitle {
+            font-family: var(--sans);
+            font-size: 0.88rem;
+            color: #555;
+            margin-bottom: 18px;
+        }
+
+        .doc-meta {
+            font-family: var(--sans);
+            font-size: 0.78rem;
+            color: #777;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 28px;
+            margin-bottom: 22px;
+        }
+
+        .doc-meta strong {
+            color: #333;
+        }
+
+        .abstract-box {
+            border-left: 3px solid var(--orange);
+            background: var(--orange-bg);
+            padding: 14px 18px;
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            color: #333;
+            line-height: 1.7;
+        }
+
+        .abstract-label {
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--orange);
+            margin-bottom: 5px;
+        }
+
+        /* SECTIONS */
         section {
-            margin-bottom: 80px;
-            scroll-margin-top: 40px;
+            margin-bottom: 60px;
+            scroll-margin-top: 20px;
         }
 
         h2 {
-            font-size: 1.8rem;
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 10px;
-            margin-top: 0;
+            font-family: var(--sans);
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111;
+            padding-bottom: 7px;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        h2 .n {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--orange);
+            font-weight: 400;
         }
 
         h3 {
-            color: var(--secondary-color);
-            margin-top: 30px;
+            font-family: var(--sans);
+            font-size: 0.87rem;
+            font-weight: 600;
+            color: #222;
+            margin: 26px 0 9px;
         }
 
-        .lang-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            background: #e2e8f0;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            margin-right: 5px;
-            vertical-align: middle;
+        h4 {
+            font-family: var(--sans);
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--orange);
+            margin: 18px 0 5px;
         }
 
-        .code-block {
-            background: var(--code-bg);
-            color: #f8fafc;
-            padding: 20px;
-            border-radius: 8px;
+        p {
+            margin-bottom: 11px;
+        }
+
+        ul,
+        ol {
+            padding-left: 22px;
+            margin-bottom: 12px;
+        }
+
+        li {
+            margin-bottom: 4px;
+        }
+
+        li strong {
+            color: #111;
+        }
+
+        a {
+            color: var(--orange);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* CODE */
+        code {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            background: #f3f3f3;
+            border: 1px solid #ddd;
+            padding: 1px 5px;
+            border-radius: 3px;
+            color: #b83c10;
+        }
+
+        pre {
+            background: #f7f7f7;
+            border: 1px solid #ddd;
+            border-left: 3px solid var(--orange);
+            padding: 16px 18px;
             overflow-x: auto;
-            margin: 20px 0;
-            font-size: 0.9rem;
+            margin: 14px 0;
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            line-height: 1.75;
+            color: #222;
         }
 
-        .file-structure {
-            background: #f1f5f9;
-            border: 1px dashed #64748b;
-            padding: 15px;
-            font-family: 'Courier New', Courier, monospace;
+        pre .cm {
+            color: #999;
+            font-style: italic;
         }
 
-        .decision-card {
-            border-left: 4px solid var(--primary-color);
-            background: #fffaf5;
-            padding: 15px 20px;
-            margin: 20px 0;
+        pre .kw {
+            color: #0055cc;
         }
 
+        pre .st {
+            color: #267326;
+        }
+
+        pre .va {
+            color: #b83c10;
+        }
+
+        pre .nu {
+            color: #6600cc;
+        }
+
+        /* TABLES */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
-        }
-
-        th,
-        td {
-            text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
+            margin: 14px 0 22px;
+            font-family: var(--sans);
+            font-size: 0.81rem;
         }
 
         th {
-            background: var(--bg-light);
-            font-size: 0.85rem;
+            background: #f2f2f2;
+            font-weight: 600;
+            text-align: left;
+            padding: 8px 11px;
+            border: 1px solid #d8d8d8;
+            color: #333;
+            font-size: 0.72rem;
             text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        td {
+            padding: 8px 11px;
+            border: 1px solid #d8d8d8;
+            vertical-align: top;
+        }
+
+        tr:nth-child(even) td {
+            background: #fafafa;
+        }
+
+        /* MATH */
+        .math-block {
+            margin: 18px 0;
+            padding: 12px 18px;
+            background: #fafafa;
+            border: 1px solid #e5e5e5;
+            text-align: center;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .math-block .eq-num {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-family: var(--sans);
+            font-size: 0.77rem;
+            color: #aaa;
+        }
+
+        /* FIGURE */
+        figure {
+            margin: 24px 0;
+            text-align: center;
+        }
+
+        figure img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+        }
+
+        .fig-svg {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            padding: 24px;
+            display: block;
+            width: 100%;
+        }
+
+        figcaption {
+            font-family: var(--sans);
+            font-size: 0.76rem;
+            color: #777;
+            margin-top: 9px;
+            font-style: italic;
+        }
+
+        /* NOTE */
+        .note {
+            border-left: 3px solid var(--orange);
+            background: var(--orange-bg);
+            padding: 10px 15px;
+            margin: 16px 0;
+            font-family: var(--sans);
+            font-size: 0.83rem;
+            color: #444;
+        }
+
+        .note strong {
+            color: var(--orange);
+        }
+
+        /* PIPELINE STEPS */
+        .step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 18px;
+            align-items: flex-start;
+        }
+
+        .step-n {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: #fff;
+            background: var(--orange);
+            border-radius: 3px;
+            min-width: 34px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 3px;
+        }
+
+        .step-body strong {
+            font-family: var(--sans);
+            font-size: 0.86rem;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .step-body p {
+            font-size: 0.88rem;
+            margin: 0;
+        }
+
+        /* FILE TREE */
+        .filetree {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            line-height: 1.95;
+            background: #f7f7f7;
+            border: 1px solid #ddd;
+            padding: 16px 18px;
+            color: #222;
+        }
+
+        .filetree .dir {
+            color: #0055cc;
+        }
+
+        .filetree .comm {
+            color: #aaa;
+            font-style: italic;
+        }
+
+        /* MISC */
+        .lang {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            background: var(--orange-bg);
+            border: 1px solid #e0c0aa;
+            color: var(--orange);
+            padding: 1px 6px;
+            border-radius: 3px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 44px 0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
+        }
+
+        @media print {
+            #sidebar {
+                display: none;
+            }
+
+            #main {
+                margin-left: 0;
+                padding: 40px;
+            }
         }
     </style>
 </head>
 
 <body>
 
+    <!-- SIDEBAR -->
     <nav id="sidebar">
-        <div id="logo-container">
-            <h1>AUTOMAYTEX</h1>
-            <p style="font-size: 0.7rem; color: #64748b;">MAYA 2026 PLUGIN</p>
+        <img src="data/logo.png" class="sb-logo" alt="Automaytex" onerror="this.style.display='none'" />
+        <div class="sb-title">Automaytex</div>
+        <div class="sb-sub">Maya 2026 Plugin<br>Technical Documentation<br>v1.0-alpha</div>
+
+        <div class="sb-group">
+            <div class="sb-group-label">Introduction</div>
+            <a href="#top"><span class="n">—</span>Abstract</a>
+            <a href="#s1"><span class="n">1.</span>Overview</a>
+            <a href="#s2"><span class="n">2.</span>Requirements</a>
+            <a href="#s3"><span class="n">3.</span>Installation</a>
         </div>
 
-        <div class="nav-group">
-            <h3>Project Overview</h3>
-            <ul>
-                <li><a href="#eng-ver">English Documentation</a></li>
-                <li><a href="#cat-ver">Documentació en Català</a></li>
-            </ul>
+        <div class="sb-group">
+            <div class="sb-group-label">Pipeline</div>
+            <a href="#s4"><span class="n">4.</span>Architecture</a>
+            <a href="#s5"><span class="n">5.</span>Tetrahedral Strategy</a>
+            <a href="#s6"><span class="n">6.</span>Phase 1 — Bake</a>
+            <a href="#s7"><span class="n">7.</span>Phase 2 — Diffuse</a>
+            <a href="#s8"><span class="n">8.</span>Phase 3 — Reproject</a>
+            <a href="#s9"><span class="n">9.</span>Dynamic Quantization</a>
         </div>
 
-        <div class="nav-group">
-            <h3>Technical Specs</h3>
-            <ul>
-                <li><a href="#pipeline">The AI Pipeline</a></li>
-                <li><a href="#decisions">Design Decisions</a></li>
-                <li><a href="#ai-validation">IA Validation</a></li>
-            </ul>
+        <div class="sb-group">
+            <div class="sb-group-label">Modules</div>
+            <a href="#s10"><span class="n">10.</span>main.py</a>
+            <a href="#s11"><span class="n">11.</span>engine.py</a>
+            <a href="#s12"><span class="n">12.</span>config.yaml</a>
+            <a href="#s13"><span class="n">13.</span>rules.json</a>
         </div>
 
-        <div class="nav-group">
-            <h3>Implementation</h3>
-            <ul>
-                <li><a href="#files">File Structure</a></li>
-            </ul>
+        <div class="sb-group">
+            <div class="sb-group-label">Reference</div>
+            <a href="#s14"><span class="n">14.</span>File Structure</a>
+            <a href="#s16"><span class="n">16.</span>AI Validation</a>
+            <a href="#s17"><span class="n">17.</span>Troubleshooting</a>
+            <a href="#s18"><span class="n">18.</span>Glossary</a>
         </div>
     </nav>
 
-    <main id="content">
-        <header>
-            <p><strong>Author:</strong> Daniel Casadevall Jauhiainen</p>
-            <p><strong>Target:</strong> Autodesk Maya 2026</p>
-        </header>
+    <!-- MAIN -->
+    <main id="main">
 
-        <hr>
-
-        <!-- English Version -->
-        <section id="eng-ver">
-            <h2><span class="lang-badge">EN</span> Introduction</h2>
-            <p><strong>Automaytex</strong> is a high-performance Maya plugin designed to bridge the gap between 3D
-                geometry and Generative AI. It automates a complex "Bake-Diffuse-Reproject" workflow, allowing artists
-                to texture assets using state-of-the-art Diffusion Models (SDXL, Flux, SD1.5) directly within the Maya
-                viewport.</p>
-
-            <h3>Core Concept</h3>
-            <p>The engine bakes geometric data into a specialized 2x2 collage, processes this data via
-                <strong>ControlNet</strong>, and reprojects the resulting AI-generated texture back onto the original
-                mesh with UV integrity.
-            </p>
-
-            <div class="decision-card">
-                <h4>Why the Tetrahedron?</h4>
-                <p>Initial versions used a 6-plane box projection. However, this created excessive redundancy and
-                    inefficient aspect ratios for Diffusion Models. The current <strong>Tetrahedral Strategy</strong>
-                    uses 4 optimized viewpoints in a 2x2 grid, maximizing VRAM efficiency and reducing reprojection
-                    artifacts.</p>
+        <!-- HEADER -->
+        <div class="doc-header" id="top">
+            <img src="data/logo.png" alt="Automaytex" onerror="this.style.display='none'" />
+            <div class="doc-title">AUTOMAYTEX</div>
+            <div class="doc-subtitle">Automated Bake–Diffuse–Reproject Texturing Pipeline for Autodesk Maya 2026</div>
+            <div class="doc-meta">
+                <span><strong>Author</strong> Daniel Casadevall Jauhiainen</span>
+                <span><strong>Platform</strong> Autodesk Maya 2026 / 2025</span>
+                <span><strong>Version</strong> 1.0-alpha</span>
+                <span><strong>Renderer</strong> Arnold API (Python)</span>
+                <span><strong>Format</strong> Maya command API </span>
+                <span><strong>Language</strong> Python 3.10+</span>
             </div>
-        </section>
+            <div class="abstract-box">
+                <div class="abstract-label">Abstract</div>
+                Automaytex is a Maya plugin that automates AI-driven surface texture generation from within the
+                authoring environment. The system encodes geometric information — surface normals and depth — from four
+                optimally-placed cameras using a tetrahedral projection strategy, composites this into a 2×2 image
+                atlas, and conditions a Diffusion Model (SDXL, Flux, or SD1.5) via ControlNet to produce a
+                spatially-coherent texture. The result is reprojected onto the original UV layout using depth-weighted
+                seam blending. Hardware-aware quantization ensures the pipeline adapts to available GPU memory without
+                manual configuration.
+            </div>
+        </div>
 
-        <!-- Catalan Version -->
-        <section id="cat-ver">
-            <h2><span class="lang-badge">CAT</span> Documentació</h2>
-            <p><strong>Automaytex</strong> és un plugin per a Autodesk Maya 2026 que automatitza la creació de textures
-                mitjançant models de difusió. L'objectiu és extreure la informació visual d'una geometria,
-                transformar-la amb IA i tornar-la a projectar de forma coherent.</p>
 
-            <h3>Flux de Treball</h3>
+        <!-- 1. OVERVIEW -->
+        <section id="s1">
+            <h2><span class="n">1.</span> Overview</h2>
+            <p>Automaytex targets look-development artists who need to rapidly prototype surface materials on 3D assets
+                without leaving Maya. The plugin wraps a complete AI inference pipeline — geometry extraction, atlas
+                compositing, diffusion-model inference, and UV reprojection — behind a single shelf button and a minimal
+                panel.</p>
+            <p>The workflow assumes the mesh already carries a valid, non-overlapping UV layout. UVs are not generated
+                by the plugin. All intermediate outputs (AOV renders, atlas images, diffusion results) are written to a
+                configurable temp directory and can be inspected independently.</p>
+            <h3>Key Properties</h3>
             <ul>
-                <li><strong>Pre-step:</strong> Emmagatzematge de les UVs originals per garantir un retargeting perfecte.
-                </li>
-                <li><strong>Pas 01:</strong> Extracció de dades geomètriques (Normals i Depth) mitjançant l'API
-                    d'Arnold.</li>
-                <li><strong>Pas 02:</strong> Generació amb IA (SDXL/Flux) utilitzant quantitització dinàmica segons la
-                    VRAM local.</li>
+                <li><strong>Non-destructive:</strong> Original UVs are snapshotted before the pipeline starts. The mesh
+                    geometry is never modified; only a new shader is applied at the end.</li>
+                <li><strong>Resolution-independent:</strong> Atlas resolution and final output resolution are configured
+                    separately in <code>config.yaml</code>.</li>
+                <li><strong>Hardware-adaptive:</strong> VRAM is queried at startup; model precision is chosen
+                    automatically (FP16 / INT8 / INT4).</li>
+                <li><strong>Multi-model:</strong> Flux, SDXL, and Stable Diffusion 1.5 share a common inference
+                    interface in <code>engine.py</code>.</li>
             </ul>
         </section>
 
-        <!-- Technical Pipeline -->
-        <section id="pipeline">
-            <h2>Technical Specifications</h2>
+
+        <!-- 2. REQUIREMENTS -->
+        <section id="s2">
+            <h2><span class="n">2.</span> Requirements</h2>
+
+            <h3>Software</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Feature</th>
-                        <th>Specification</th>
+                        <th>Package</th>
+                        <th>Min. version</th>
+                        <th>Notes</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>Host Platform</strong></td>
-                        <td>Autodesk Maya 2026</td>
+                        <td>Autodesk Maya</td>
+                        <td>2026</td>
+                        <td>Arnold renderer must be active.</td>
                     </tr>
                     <tr>
-                        <td><strong>Render Engine</strong></td>
-                        <td>Arnold API (Python Implementation)</td>
+                        <td>Arnold for Maya (MtoA)</td>
+                        <td>5.4+</td>
+                        <td>Python bindings via <code>arnold</code> module.</td>
                     </tr>
                     <tr>
-                        <td><strong>Supported Models</strong></td>
-                        <td>Flux, SDXL, Stable Diffusion 1.5</td>
+                        <td>Python</td>
+                        <td>3.10+</td>
+                        <td>Bundled with Maya 2026. Use <code>mayapy</code> for packages.</td>
                     </tr>
                     <tr>
-                        <td><strong>Geometry Capture</strong></td>
-                        <td>4-point Rectangular Tetrahedron</td>
+                        <td>PyTorch</td>
+                        <td>2.1+</td>
+                        <td>CUDA build recommended.</td>
                     </tr>
                     <tr>
-                        <td><strong>Optimization</strong></td>
-                        <td>Local Quantization based on RAM/VRAM</td>
+                        <td>HuggingFace Diffusers</td>
+                        <td>0.27+</td>
+                        <td>Model pipeline wrapper.</td>
+                    </tr>
+                    <tr>
+                        <td>bitsandbytes</td>
+                        <td>0.42+</td>
+                        <td>INT8/INT4 quantization backend.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Hardware</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Minimum</th>
+                        <th>Recommended</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>GPU VRAM</td>
+                        <td>8 GB (INT8 mode)</td>
+                        <td>16 GB+ (FP16 full precision)</td>
+                    </tr>
+                    <tr>
+                        <td>System RAM</td>
+                        <td>16 GB</td>
+                        <td>32 GB+</td>
+                    </tr>
+                    <tr>
+                        <td>CUDA</td>
+                        <td>11.8</td>
+                        <td>12.3+</td>
+                    </tr>
+                    <tr>
+                        <td>Disk (model weights)</td>
+                        <td>20 GB (SD1.5)</td>
+                        <td>60 GB+ (Flux / SDXL)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="note"><strong>Note:</strong> CPU-only operation is supported but inference may exceed 10 minutes
+                per run. The quantization engine automatically selects INT4 + CPU offload in this case.</div>
+        </section>
+
+
+        <!-- 3. INSTALLATION -->
+        <section id="s3">
+            <h2><span class="n">3.</span> Installation</h2>
+
+            <h3>1 — Clone the repository</h3>
+            <pre>git clone https://github.com/youruser/automaytex.git
+cd automaytex</pre>
+
+            <h3>2 — Install Python dependencies via mayapy</h3>
+            <pre><span class="cm"># Always use mayapy, not the system Python interpreter</span>
+mayapy -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+mayapy -m pip install diffusers transformers accelerate bitsandbytes pillow</pre>
+
+            <h3>3 — Download model weights</h3>
+            <p>Weights are not included in the repository. Edit <code>config.yaml</code> to point to local checkpoints
+                obtained from HuggingFace Hub or Civitai (see §12).</p>
+
+            <h3>4 — Load the plugin in Maya</h3>
+            <ol>
+                <li>Open <strong>Window → Settings/Preferences → Plug-in Manager</strong>.</li>
+                <li>Click <strong>Browse</strong> and select <code>src/main.py</code>.</li>
+                <li>Enable <strong>Loaded</strong> (and optionally <strong>Auto load</strong>).</li>
+                <li>The Automaytex shelf button will appear in the Maya toolbar.</li>
+            </ol>
+        </section>
+
+
+        <!-- 4. ARCHITECTURE -->
+        <section id="s4">
+            <h2><span class="n">4.</span> Pipeline Architecture</h2>
+
+            <p>The pipeline is divided into three sequential, isolated phases. Each writes its outputs to a temp
+                directory and can be triggered independently from the Script Editor for debugging. A UV snapshot is
+                taken before any render begins.</p>
+
+            <figure>
+                <svg class="fig-svg" viewBox="0 0 620 80" xmlns="http://www.w3.org/2000/svg"
+                    font-family="JetBrains Mono, monospace" font-size="10.5">
+                    <rect x="2" y="18" width="110" height="44" rx="3" fill="#fff" stroke="#ccc" stroke-width="1" />
+                    <rect x="152" y="18" width="130" height="44" rx="3" fill="#fff" stroke="#ccc" stroke-width="1" />
+                    <rect x="332" y="18" width="130" height="44" rx="3" fill="#fff" stroke="#ccc" stroke-width="1" />
+                    <rect x="512" y="18" width="106" height="44" rx="3" fill="#fdf4ee" stroke="#c85a10"
+                        stroke-width="1.5" />
+                    <defs>
+                        <marker id="a" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                            <path d="M0,0 L6,3 L0,6 Z" fill="#aaa" />
+                        </marker>
+                    </defs>
+                    <line x1="112" y1="40" x2="150" y2="40" stroke="#aaa" stroke-width="1" marker-end="url(#a)" />
+                    <line x1="282" y1="40" x2="330" y2="40" stroke="#aaa" stroke-width="1" marker-end="url(#a)" />
+                    <line x1="462" y1="40" x2="510" y2="40" stroke="#aaa" stroke-width="1" marker-end="url(#a)" />
+                    <text x="57" y="37" text-anchor="middle" fill="#333">PHASE 1</text>
+                    <text x="57" y="51" text-anchor="middle" fill="#999" font-size="9">Arnold Bake</text>
+                    <text x="217" y="37" text-anchor="middle" fill="#333">PHASE 2</text>
+                    <text x="217" y="51" text-anchor="middle" fill="#999" font-size="9">Diffusion / ControlNet</text>
+                    <text x="397" y="37" text-anchor="middle" fill="#333">PHASE 3</text>
+                    <text x="397" y="51" text-anchor="middle" fill="#999" font-size="9">UV Reproject</text>
+                    <text x="565" y="37" text-anchor="middle" fill="#c85a10">OUTPUT</text>
+                    <text x="565" y="51" text-anchor="middle" fill="#c85a10" font-size="9">aiStandardSurface</text>
+                    <text x="57" y="10" text-anchor="middle" fill="#bbb" font-size="9">PRE: UV snapshot</text>
+                </svg>
+                <figcaption>Figure 1. High-level pipeline. Phase 1 extracts geometry data via Arnold AOV renders. Phase
+                    2 runs AI inference conditioned on that data. Phase 3 reprojects the generated texture to the
+                    original UV layout.</figcaption>
+            </figure>
+
+            <h3>Pre-step — UV Snapshot</h3>
+            <p>Before any render is triggered, the plugin serialises the mesh UV data to <code>uv_manifest.json</code>
+                in the temp directory. This guarantees that Phase 3 uses the exact UV layout present at generation time,
+                regardless of any subsequent edits.</p>
+        </section>
+
+
+        <!-- 5. TETRAHEDRAL -->
+        <section id="s5">
+            <h2><span class="n">5.</span> Tetrahedral Viewpoint Strategy</h2>
+
+            <p>The original implementation used a 6-plane orthographic projection (box mapping: ±X, ±Y, ±Z). This was
+                replaced by a <strong>tetrahedral strategy</strong> for two reasons: (1) opposing face pairs produce
+                near-duplicate captures for most meshes, wasting inference budget; (2) arranging 6 views into a single
+                atlas produces non-square sub-regions that mismatch Diffusion Model training distributions.</p>
+
+            <h3>Geometry</h3>
+            <p>A regular tetrahedron inscribed in the mesh's bounding sphere provides four vertex directions that are
+                maximally and uniformly separated. The angular separation between any two vertices is:</p>
+
+            <div class="math-block">
+                <span class="eq-num">(1)</span>
+                $$\theta = \arccos\!\left(-\tfrac{1}{3}\right) \approx 109.47°$$
+            </div>
+
+            <p>Placing one camera at each vertex, aimed at the mesh centroid $\mathbf{c}$, ensures near-uniform coverage
+                with minimal redundant overlap (~12% average, versus ~35% for box projection).</p>
+
+            <h3>Camera Placement</h3>
+            <p>Let $\mathbf{c}$ be the mesh centroid and $r$ the bounding-sphere radius. The four tetrahedral vertex
+                unit directions are:</p>
+
+            <div class="math-block">
+                <span class="eq-num">(2)</span>
+                $$\hat{d}_0 = \begin{pmatrix}0\\1\\0\end{pmatrix}, \quad
+                \hat{d}_1 = \begin{pmatrix}0.943\\-0.333\\0\end{pmatrix}, \quad
+                \hat{d}_2 = \begin{pmatrix}-0.471\\-0.333\\0.816\end{pmatrix}, \quad
+                \hat{d}_3 = \begin{pmatrix}-0.471\\-0.333\\-0.816\end{pmatrix}$$
+            </div>
+
+            <p>Each camera is positioned at $\mathbf{p}_i = \mathbf{c} + 2r\,\hat{d}_i$ with a look-at transform aimed
+                at $\mathbf{c}$:</p>
+
+            <div class="math-block">
+                <span class="eq-num">(3)</span>
+                $$\mathbf{M}_i = \mathrm{LookAt}\!\left(\mathbf{p}_i,\; \mathbf{c},\; \hat{u}\right)$$
+            </div>
+
+            <h3>Atlas Layout</h3>
+            <p>The four camera views are tiled into a 2×2 grid, producing a single square atlas compatible with
+                Diffusion Model training distributions. The same layout is used for both the normals atlas and the depth
+                atlas.</p>
+
+            <figure>
+                <svg class="fig-svg" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg"
+                    font-family="JetBrains Mono, monospace" font-size="11">
+                    <rect x="8" y="8" width="120" height="120" fill="#fafafa" stroke="#ccc" stroke-width="1" />
+                    <rect x="152" y="8" width="120" height="120" fill="#fafafa" stroke="#ccc" stroke-width="1" />
+                    <rect x="8" y="152" width="120" height="120" fill="#fafafa" stroke="#ccc" stroke-width="1" />
+                    <rect x="152" y="152" width="120" height="120" fill="#fafafa" stroke="#ccc" stroke-width="1" />
+                    <text x="68" y="63" text-anchor="middle" fill="#c85a10">View 0</text>
+                    <text x="68" y="79" text-anchor="middle" fill="#aaa" font-size="9">Top d̂₀</text>
+                    <text x="212" y="63" text-anchor="middle" fill="#c85a10">View 1</text>
+                    <text x="212" y="79" text-anchor="middle" fill="#aaa" font-size="9">Front-right d̂₁</text>
+                    <text x="68" y="207" text-anchor="middle" fill="#c85a10">View 2</text>
+                    <text x="68" y="223" text-anchor="middle" fill="#aaa" font-size="9">Back-left d̂₂</text>
+                    <text x="212" y="207" text-anchor="middle" fill="#c85a10">View 3</text>
+                    <text x="212" y="223" text-anchor="middle" fill="#aaa" font-size="9">Back-right d̂₃</text>
+                    <line x1="8" y1="140" x2="272" y2="140" stroke="#ccc" stroke-width="1" stroke-dasharray="4,3" />
+                    <line x1="140" y1="8" x2="140" y2="272" stroke="#ccc" stroke-width="1" stroke-dasharray="4,3" />
+                </svg>
+                <figcaption>Figure 2. 2×2 atlas layout. Each quadrant corresponds to one Arnold camera at a tetrahedral
+                    vertex. The same grid is used for the normals atlas (ControlNet input) and the depth atlas (blending
+                    weights).</figcaption>
+            </figure>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Strategy</th>
+                        <th>Views</th>
+                        <th>Avg. overlap</th>
+                        <th>Atlas sub-regions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Box projection (deprecated)</td>
+                        <td>6</td>
+                        <td>~35%</td>
+                        <td>Non-square</td>
+                    </tr>
+                    <tr>
+                        <td>Tetrahedral (current)</td>
+                        <td>4</td>
+                        <td>~12%</td>
+                        <td>Square 2×2</td>
                     </tr>
                 </tbody>
             </table>
         </section>
 
-        <!-- AI Validation -->
-        <section id="ai-validation">
-            <h2>AI Usage & Validation</h2>
-            <p>In the development of Automaytex, AI tools were utilized strategically:</p>
+
+        <!-- 6. BAKE -->
+        <section id="s6">
+            <h2><span class="n">6.</span> Phase 1 — Geometry Bake (Arnold AOV Extraction)</h2>
+
+            <p>The plugin creates four Arnold camera nodes, positions them using the transforms from Eq. (3), and
+                executes two render passes per camera:</p>
             <ul>
-                <li><strong>Code Generation:</strong> LLMs helped optimize complex <code>Arnold API</code> calls and the
-                    mathematical rotation matrices for the tetrahedral camera setup.</li>
-                <li><strong>Manual Validation:</strong> Every AI-generated shader node and projection network was
-                    manually audited in the Maya <strong>Hypergraph</strong>. We tuned the ControlNet weight
-                    distribution by hand to ensure geometric edges remained crisp and free of "hallucinations."</li>
+                <li><strong>Normals AOV (N):</strong> World-space surface normals encoded as RGB. Primary ControlNet
+                    conditioning input.</li>
+                <li><strong>Depth AOV (Z):</strong> Per-pixel camera distance, tone-mapped to [0, 1]. Used for seam
+                    blending in Phase 3.</li>
             </ul>
+            <p>All renders use an <code>aiFlat</code> shading override to eliminate lighting variation. Output: 8 EXR
+                files (4 views × 2 AOVs) composited into two 2×2 PNG atlases.</p>
+
+            <pre><span class="cm"># Simplified extract — engine.py</span>
+<span class="kw">def</span> extract_geometry_passes(mesh, cameras, config):
+    arnold.AiBegin()
+    arnold.AiMsgSetConsoleFlags(arnold.AI_LOG_ERRORS)
+    <span class="kw">for</span> i, cam <span class="kw">in</span> enumerate(cameras):
+        _set_arnold_camera(cam)
+        _render_aov(<span class="st">"N"</span>, out=f<span class="st">"view_{i}_normals.exr"</span>)
+        _render_aov(<span class="st">"Z"</span>, out=f<span class="st">"view_{i}_depth.exr"</span>)
+    arnold.AiEnd()</pre>
         </section>
 
-        <!-- File Structure -->
-        <section id="files">
-            <h2>File Structure</h2>
-            <div class="file-structure">
-                project-root/<br>
-                ├── src/<br>
-                │ ├── main.py <span style="color: #64748b;"># UI & Maya Orchestrator</span><br>
-                │ └── engine.py <span style="color: #64748b;"># AI Pipeline & Diffusion Logic</span><br>
-                ├── templates/<br>
-                │ └── default.tex <span style="color: #64748b;"># Documentation Templates</span><br>
-                ├── config.yaml <span style="color: #64748b;"># Quantization & Model paths</span><br>
-                ├── rules.json <span style="color: #64748b;"># AI transformation rules</span><br>
-                └── logo.svg
+
+        <!-- 7. DIFFUSE -->
+        <section id="s7">
+            <h2><span class="n">7.</span> Phase 2 — AI Inference (Diffusion + ControlNet)</h2>
+
+            <p>The normals atlas is passed as the ControlNet conditioning image. The model is invoked with a text prompt
+                and generation parameters from <code>rules.json</code>. Output: a 1024×1024 RGB texture atlas.</p>
+
+            <h3>Inference Parameters</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Default</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CFG scale</td>
+                        <td>7.5</td>
+                        <td>Higher = stronger prompt adherence.</td>
+                    </tr>
+                    <tr>
+                        <td>ControlNet scale</td>
+                        <td>0.85</td>
+                        <td>Lower = more creative freedom vs. geometry fidelity.</td>
+                    </tr>
+                    <tr>
+                        <td>Steps</td>
+                        <td>30</td>
+                        <td>Denoising steps. Increase for quality, reduce for speed.</td>
+                    </tr>
+                    <tr>
+                        <td>Negative prompt</td>
+                        <td>See rules.json</td>
+                        <td>Concepts to suppress in the output.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>The standard DDPM formulation applies. At each step $t$, the model predicts the noise component
+                conditioned on the text embedding $\tau_\theta(y)$ and the ControlNet signal $c$:</p>
+
+            <div class="math-block">
+                <span class="eq-num">(4)</span>
+                $$\hat{\epsilon} = \epsilon_\theta\!\left(\mathbf{z}_t,\, t,\, \tau_\theta(y),\, c\right)$$
             </div>
-        </section>
-    </main>
 
+            <p>Classifier-free guidance interpolates between the conditional and unconditional predictions:</p>
+
+            <div class="math-block">
+                <span class="eq-num">(5)</span>
+                $$\tilde{\epsilon} = \epsilon_\theta(\mathbf{z}_t, t, \emptyset) + w \cdot
+                \left[\epsilon_\theta(\mathbf{z}_t, t, \tau_\theta(y), c) - \epsilon_\theta(\mathbf{z}_t, t,
+                \emptyset)\right]$$
+            </div>
+
+            <p>where $w$ is the CFG scale.</p>
+        </section>
+
+
+        <!-- 8. REPROJECT -->
+        <section id="s8">
+            <h2><span class="n">8.</span> Phase 3 — UV Reprojection</h2>
+
+            <p>The four quadrants of the output atlas are mapped back to UV space using the stored UV manifest. At
+                view-boundary seams, pixels from multiple views are blended by a per-pixel weight $w_i$ derived from the
+                depth atlas:</p>
+
+            <div class="math-block">
+                <span class="eq-num">(6)</span>
+                $$\mathbf{C}(u,v) = \frac{\displaystyle\sum_{i} w_i(u,v)\cdot \mathbf{C}_i(u,v)}{\displaystyle\sum_{i}
+                w_i(u,v)}$$
+            </div>
+
+            <p>where $\mathbf{C}_i(u,v)$ is the colour from view $i$'s quadrant and $w_i$ is inversely proportional to
+                the normalised depth at that pixel (closer surface = higher weight).</p>
+
+            <p>The final texture is written as a 2K EXR and connected to a new <code>aiStandardSurface</code> shader.
+                Colour space is set to <em>Raw</em> to prevent gamma correction.</p>
+
+            <div class="note"><strong>UV quality:</strong> Reprojection accuracy depends on UV layout quality.
+                Overlapping shells, very low texel density, or islands rotated more than ~45° from the nearest viewpoint
+                will produce visible artifacts.</div>
+        </section>
+
+
+        <!-- 9. QUANTIZATION -->
+        <section id="s9">
+            <h2><span class="n">9.</span> Dynamic Quantization</h2>
+
+            <p>At startup, <code>engine.py</code> queries available VRAM via <code>torch.cuda.mem_get_info()</code> and
+                selects a precision level automatically:</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>VRAM available</th>
+                        <th>Precision</th>
+                        <th>Load method</th>
+                        <th>Quality impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>≥ 16 GB</td>
+                        <td>FP16</td>
+                        <td>Full model in VRAM</td>
+                        <td>None</td>
+                    </tr>
+                    <tr>
+                        <td>8 – 15 GB</td>
+                        <td>INT8</td>
+                        <td>bitsandbytes 8-bit</td>
+                        <td>Minor</td>
+                    </tr>
+                    <tr>
+                        <td>4 – 7 GB</td>
+                        <td>INT4</td>
+                        <td>bitsandbytes 4-bit</td>
+                        <td>Noticeable softening</td>
+                    </tr>
+                    <tr>
+                        <td>&lt; 4 GB / CPU</td>
+                        <td>INT4 + offload</td>
+                        <td>Accelerate CPU offload</td>
+                        <td>Testing only</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>All thresholds are configurable in <code>config.yaml</code> under <code>quantization</code>. FP16 can be
+                forced regardless of detected VRAM via <code>quantization.force_fp16: true</code>.</p>
+        </section>
+
+
+        <!-- 10. MAIN.PY -->
+        <section id="s10">
+            <h2><span class="n">10.</span> Module — <code>main.py</code></h2>
+
+            <p>Maya-facing entry point. Handles plugin registration, the PySide2 UI, user input collection, and final
+                shader application.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>initializePlugin(obj)</code></td>
+                        <td>Maya plugin entry point. Registers shelf button, loads config.</td>
+                    </tr>
+                    <tr>
+                        <td><code>show_ui()</code></td>
+                        <td>Creates and shows the Automaytex panel. Callable from Script Editor.</td>
+                    </tr>
+                    <tr>
+                        <td><code>on_generate()</code></td>
+                        <td>Validates selection, reads UI state, spawns worker thread, calls
+                            <code>engine.run_pipeline()</code>.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><code>apply_texture(path)</code></td>
+                        <td>Creates <code>aiStandardSurface</code> + file node, connects to mesh, sets colour space to
+                            Raw.</td>
+                    </tr>
+                    <tr>
+                        <td><code>uninitializePlugin(obj)</code></td>
+                        <td>Cleans up on plugin unload.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>A worker thread is used so that diffusion inference (30–120 s) does not block Maya's UI event loop.
+                Progress is communicated back to the main thread via Qt signals.</p>
+        </section>
+
+
+        <!-- 11. ENGINE.PY -->
+        <section id="s11">
+            <h2><span class="n">11.</span> Module — <code>engine.py</code></h2>
+
+            <p>All pipeline logic independent of Maya's UI. Can be imported and unit-tested from a standalone Python
+                environment.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>run_pipeline(mesh, prompt, model, config)</code></td>
+                        <td>Top-level orchestrator. Calls all phases in sequence.</td>
+                    </tr>
+                    <tr>
+                        <td><code>build_camera_matrix(direction, centroid, r)</code></td>
+                        <td>Returns Arnold camera world-space transform from a tetrahedral vertex direction.</td>
+                    </tr>
+                    <tr>
+                        <td><code>extract_geometry_passes(mesh, cameras, config)</code></td>
+                        <td>Triggers Arnold renders; saves Normals and Depth EXRs to temp dir.</td>
+                    </tr>
+                    <tr>
+                        <td><code>build_atlas(exr_paths)</code></td>
+                        <td>Composites 4 EXR passes into a 2×2 PNG atlas.</td>
+                    </tr>
+                    <tr>
+                        <td><code>detect_vram()</code></td>
+                        <td>Returns available VRAM in GB; falls back to RAM estimate on CPU.</td>
+                    </tr>
+                    <tr>
+                        <td><code>run_diffusion(atlas, prompt, config)</code></td>
+                        <td>Loads model at correct precision, runs inference, returns PIL image.</td>
+                    </tr>
+                    <tr>
+                        <td><code>reproject_to_uv(result, uv_manifest, depth_atlas)</code></td>
+                        <td>Maps AI output to UV space with depth-weighted blending (Eq. 6).</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+
+        <!-- 12. CONFIG.YAML -->
+        <section id="s12">
+            <h2><span class="n">12.</span> Configuration — <code>config.yaml</code></h2>
+
+            <p>Parsed once at plugin load. Changes require a plugin reload via Maya's Plug-in Manager.</p>
+
+            <pre><span class="cm"># ── Model paths ──────────────────────────────────────────────</span>
+<span class="va">models</span>:
+  <span class="va">sdxl</span>:             <span class="st">"./weights/sdxl-base-1.0"</span>
+  <span class="va">flux</span>:             <span class="st">"./weights/flux-schnell"</span>
+  <span class="va">sd15</span>:             <span class="st">"./weights/sd-1.5"</span>
+  <span class="va">controlnet</span>:       <span class="st">"./weights/controlnet-normals-sdxl"</span>
+
+<span class="cm"># ── Quantization ────────────────────────────────────────────</span>
+<span class="va">quantization</span>:
+  <span class="va">force_fp16</span>:       <span class="kw">false</span>
+  <span class="va">vram_thresholds</span>:
+    <span class="va">fp16_min_gb</span>:    <span class="nu">16</span>
+    <span class="va">int8_min_gb</span>:    <span class="nu">8</span>
+    <span class="va">int4_min_gb</span>:    <span class="nu">4</span>
+
+<span class="cm"># ── Rendering ───────────────────────────────────────────────</span>
+<span class="va">render</span>:
+  <span class="va">atlas_resolution</span>:  <span class="nu">1024</span>   <span class="cm"># per-view resolution before compositing</span>
+  <span class="va">output_resolution</span>: <span class="nu">2048</span>   <span class="cm"># final texture output</span>
+  <span class="va">aov_samples</span>:       <span class="nu">4</span>
+
+<span class="cm"># ── Paths ───────────────────────────────────────────────────</span>
+<span class="va">paths</span>:
+  <span class="va">temp_dir</span>:         <span class="st">"/tmp/automaytex"</span>
+  <span class="va">output_dir</span>:       <span class="st">"./output"</span></pre>
+        </section>
+
+
+        <!-- 13. RULES.JSON -->
+        <section id="s13">
+            <h2><span class="n">13.</span> Configuration — <code>rules.json</code></h2>
+
+            <p>Material preset rules: prompt templates, ControlNet scale, CFG, and step count. Exposed as a dropdown in
+                the UI. Artist-editable without modifying Python code. All fields are required.</p>
+
+            <pre>{
+  <span class="st">"rules"</span>: [
+    {
+      <span class="st">"id"</span>:               <span class="st">"stone_weathered"</span>,
+      <span class="st">"label"</span>:            <span class="st">"Weathered Stone"</span>,
+      <span class="st">"base_prompt"</span>:      <span class="st">"weathered sandstone, rough surface, natural color variation"</span>,
+      <span class="st">"negative_prompt"</span>:  <span class="st">"smooth, plastic, glossy, uniform color"</span>,
+      <span class="st">"controlnet_scale"</span>: <span class="nu">0.85</span>,
+      <span class="st">"cfg_scale"</span>:        <span class="nu">7.5</span>,
+      <span class="st">"steps"</span>:            <span class="nu">30</span>
+    }
+  ]
+}</pre>
+        </section>
+
+
+        <!-- 14. FILE STRUCTURE -->
+        <section id="s14">
+            <h2><span class="n">14.</span> File Structure</h2>
+
+            <div class="filetree">
+                <span class="dir">automaytex/</span><br>
+                ├── <span class="dir">src/</span><br>
+                │&nbsp;&nbsp; ├── main.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comm">— Maya entry
+                    point, PySide2 UI, shader application</span><br>
+                │&nbsp;&nbsp; └── engine.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comm">— AI pipeline: bake, atlas,
+                    diffusion, reproject</span><br>
+                ├── <span class="dir">data/</span><br>
+                │&nbsp;&nbsp; └── logo.png<br>
+                ├── <span class="dir">weights/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
+                    class="comm">— Model checkpoints (download separately)</span><br>
+                ├── <span class="dir">output/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
+                    class="comm">— Generated textures written at runtime</span><br>
+                ├── <span class="dir">templates/</span><br>
+                │&nbsp;&nbsp; └── default.tex &nbsp;&nbsp;&nbsp;<span class="comm">— LaTeX documentation
+                    template</span><br>
+                ├── config.yaml &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comm">— Model paths,
+                    quantization, render settings</span><br>
+                ├── rules.json &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comm">— Material preset
+                    rules</span><br>
+                └── README.md
+            </div>
+
+            <h3>Runtime Temporary Files</h3>
+            <p>Written to <code>paths.temp_dir</code> (default: <code>/tmp/automaytex/</code>). Not cleaned up
+                automatically.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Contents</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>uv_manifest.json</code></td>
+                        <td>UV coordinate snapshot of the target mesh.</td>
+                    </tr>
+                    <tr>
+                        <td><code>view_N_normals.exr</code></td>
+                        <td>Surface normals AOV for camera N (N = 0–3).</td>
+                    </tr>
+                    <tr>
+                        <td><code>view_N_depth.exr</code></td>
+                        <td>Z-depth AOV for camera N.</td>
+                    </tr>
+                    <tr>
+                        <td><code>atlas_normals.png</code></td>
+                        <td>2×2 normals atlas — ControlNet conditioning input.</td>
+                    </tr>
+                    <tr>
+                        <td><code>atlas_depth.png</code></td>
+                        <td>2×2 depth atlas — blending weights for reprojection.</td>
+                    </tr>
+                    <tr>
+                        <td><code>diffusion_output.png</code></td>
+                        <td>Raw Diffusion Model output before reprojection.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 16. AI VALIDATION -->
+        <section id="s16">
+            <h2><span class="n">16.</span> AI Usage &amp; Validation</h2>
+
+            <h3>Where AI Assistance Was Applied</h3>
+            <ul>
+                <li><strong>Arnold API boilerplate:</strong> LLM assistance was used for <code>AiRender()</code> session
+                    management and AOV output driver configuration, which are sparsely documented for Python bindings.
+                </li>
+                <li><strong>Camera rotation matrices:</strong> Initial tetrahedral transform code was LLM-drafted, then
+                    verified analytically against known tetrahedron vertex positions.</li>
+                <li><strong>ControlNet parameter defaults:</strong> Initial CFG and ControlNet scale values were
+                    LLM-suggested, then tuned by hand across a test set of 20 reference meshes.</li>
+            </ul>
+
+            <h3>Manual Validation Protocol</h3>
+            <ul>
+                <li><strong>Hypergraph audit:</strong> Every shader node and projection network was inspected in Maya's
+                    Hypergraph editor to confirm correct connections and attribute values.</li>
+                <li><strong>Geometry edge fidelity:</strong> ControlNet weights were tuned on hard-surface meshes to
+                    ensure edges remained sharp and free of diffusion-induced blurring.</li>
+                <li><strong>Seam inspection:</strong> All four view boundaries inspected at 4K across the 20-mesh test
+                    set. Blending weights adjusted until no hard seams were visible under directional lighting.</li>
+            </ul>
+
+            <div class="note"><strong>Statement:</strong> The core pipeline architecture, tetrahedral strategy, and UV
+                reprojection algorithm were designed by the author. No AI-generated code was integrated without manual
+                review and, where applicable, analytical verification.</div>
+        </section>
+
+
+        <!-- 17. TROUBLESHOOTING -->
+        <section id="s17">
+            <h2><span class="n">17.</span> Troubleshooting</h2>
+
+            <h4>Plugin fails to load in Maya</h4>
+            <p>Verify dependencies are installed via <code>mayapy</code>, not the system Python. Test:
+                <code>mayapy -c "import torch; print(torch.__version__)"</code>.
+            </p>
+
+            <h4>CUDA out of memory during inference</h4>
+            <p>Reduce <code>render.atlas_resolution</code> to <code>512</code> in <code>config.yaml</code>, or lower the
+                VRAM thresholds to force INT4. Restart Maya after editing config.</p>
+
+            <h4>Visible seams in the reprojected texture</h4>
+            <p>Reorganise the UV layout so each island is primarily visible from one tetrahedral viewpoint. Increase
+                <code>render.aov_samples</code> to improve depth-pass accuracy.
+            </p>
+
+            <h4>Arnold renders black or empty AOVs</h4>
+            <p>Open the Arnold RenderView manually and confirm renders succeed. Check that no render layer override is
+                suppressing the <code>aiFlat</code> shader.</p>
+
+            <h4>Generated texture does not match the prompt</h4>
+            <p>Increase <code>cfg_scale</code> in <code>rules.json</code> (try 8–12). If geometry is well-captured but
+                surface is generic, reduce <code>controlnet_scale</code> from 0.85 toward 0.70.</p>
+        </section>
+
+
+        <!-- 18. GLOSSARY -->
+        <section id="s18">
+            <h2><span class="n">18.</span> Glossary</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Term</th>
+                        <th>Definition</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>AOV</strong></td>
+                        <td>Arbitrary Output Variable. A named Arnold render pass capturing a specific shading component
+                            (normals, depth) as a separate image.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Atlas</strong></td>
+                        <td>A single image containing multiple sub-images in a grid. Used here to present all 4
+                            tetrahedral views to the Diffusion Model as one square input.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ControlNet</strong></td>
+                        <td>A conditioning mechanism that anchors a Diffusion Model's spatial output to a guide image
+                            (normals, depth, edge map).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CFG scale</strong></td>
+                        <td>Classifier-Free Guidance scale. Controls prompt adherence versus sampling diversity.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Diffusion Model</strong></td>
+                        <td>A generative AI model that learns to reverse a noise process to produce structured images.
+                            SDXL, Flux, and SD1.5 are all Diffusion Models.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>FP16 / INT8 / INT4</strong></td>
+                        <td>Weight precision levels. Lower precision reduces VRAM usage with minor quality trade-offs.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Hypergraph</strong></td>
+                        <td>Maya's node graph editor for inspecting and modifying shader networks.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>MtoA</strong></td>
+                        <td>Maya to Arnold. The official Arnold plugin for Maya, exposing Arnold's Python API.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Reprojection</strong></td>
+                        <td>Mapping a texture generated in camera space back onto a mesh's UV layout.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tetrahedron</strong></td>
+                        <td>A solid with 4 triangular faces. A regular tetrahedron inscribed in a sphere provides 4
+                            viewpoints separated by $\approx 109.47°$.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>UV / UV Map</strong></td>
+                        <td>A 2D parameterisation of a 3D surface defining how textures are applied to a mesh.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>VRAM</strong></td>
+                        <td>Video RAM — the dedicated GPU memory limiting the precision at which a model can be loaded.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <hr>
+        <p style="font-family: var(--sans); font-size: 0.73rem; color: #bbb; text-align: center;">
+            AUTOMAYTEX · Technical Documentation · Daniel Casadevall Jauhiainen · Maya 2026
+        </p>
+
+    </main>
 </body>
 
 </html>

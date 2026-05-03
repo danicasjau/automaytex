@@ -17,41 +17,40 @@ sys.path.append(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex")
 sys.path.append(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Lib\site-packages")
 
 import config
-import geoPlanarExtraction
-import exrCollageGenerator
-import geoPlanarUVProjection
-import exrCollageBroker
-import materialCreation
-import reUvPorjection
-import mtlMaterialMapsCreation
+import mPipline.geoExtractionSix.geoPlanarExtraction
+import mPipline.exrCollage.exrCollageGenerator
+import mPipline.geoExtractionSix.geoPlanarUVProjection
+import mPipline.exrCollage.exrCollageBroker
+import mPipline.mtlMaya.materialCreation
+import mPipline.uvUtils.reUvPorjection
+import mPipline.mtlMaya.mtlMaterialMapsCreation
 import mGui
 
 
 def maya_remiport_libs():
         # Reload modules for development
     importlib.reload(config)
-    importlib.reload(geoPlanarExtraction)
-    importlib.reload(exrCollageGenerator)
-    importlib.reload(geoPlanarUVProjection)
-    importlib.reload(exrCollageBroker)
-    importlib.reload(materialCreation)
-    importlib.reload(reUvPorjection)
-    importlib.reload(mtlMaterialMapsCreation)
+    importlib.reload(mPipline.geoExtractionSix.geoPlanarExtraction)
+    importlib.reload(mPipline.exrCollage.exrCollageGenerator)
+    importlib.reload(mPipline.geoExtractionSix.geoPlanarUVProjection)
+    importlib.reload(mPipline.exrCollage.exrCollageBroker)
+    importlib.reload(mPipline.mtlMaya.materialCreation)
+    importlib.reload(mPipline.uvUtils.reUvPorjection)
+    importlib.reload(mPipline.mtlMaya.mtlMaterialMapsCreation)
     importlib.reload(mGui)
-
 
 
 from config import configuration
 
-from geoPlanarExtraction import GeometryPlanarExtractor
-from exrCollageGenerator import EXRCollageGenerator
-from geoPlanarUVProjection import GeoPlanarUVProjection
+from mPipline.geoExtractionSix.geoPlanarExtraction import GeometryPlanarExtractor
+from mPipline.exrCollage.exrCollageGenerator import EXRCollageGenerator
+from mPipline.geoExtractionSix.geoPlanarUVProjection import GeoPlanarUVProjection
 
-from exrCollageBroker import CollageSplitter
-from materialCreation import autoMaMaterial
-from reUvPorjection import UVRetargetTool
+from mPipline.exrCollage.exrCollageBroker import CollageSplitter
+from mPipline.mtlMaya.materialCreation import autoMaMaterial
+from mPipline.uvUtils.reUvPorjection import UVRetargetTool
 
-from mtlMaterialMapsCreation import mapsMaterialGenerator
+from mPipline.mtlMaya.mtlMaterialMapsCreation import mapsMaterialGenerator
 
 from mGui import mGui
 
