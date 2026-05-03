@@ -10,7 +10,6 @@ class cModels():
             from config import configuration
             configuration = configuration()
         
-        
     
     def load_all(self, configuration):
         self.models2load = self.config.base_model

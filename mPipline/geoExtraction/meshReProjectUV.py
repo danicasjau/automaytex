@@ -13,12 +13,18 @@ from PIL import Image
 
 
 class UVRetargetTool:
-    def __init__(self, mesh, output_dir=None, config=None):
+    def __init__(self, mesh=None, output_dir=None, config=None):
         if config is None:
             from config import configuration          # type: ignore[import]
             config = configuration()
+        
         self.config = config
-        self.mesh   = mesh
+
+        if mesh is None:
+            self.mesh = cmds.ls(sl=True, long=True)[0]
+        else:
+            self.mesh = mesh
+
         self.output_dir = output_dir or self.config.output_path
 
         os.makedirs(self.output_dir, exist_ok=True)
@@ -203,7 +209,7 @@ class UVRetargetTool:
     # PUBLIC – MAIN RETARGET
     # ------------------------------------------------------------------
 
-    def retargetToOriginalUV(self, resolution: int = 1024) -> None:
+    def retargetToOriginalUV(self, resolution) -> None:
         if not MAYA_AVAILABLE:
             raise RuntimeError("Maya is not available.")
 

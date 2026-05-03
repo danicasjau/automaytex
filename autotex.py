@@ -1,10 +1,11 @@
 # auto texturing maya - pipline integration
 # daniel casadevall jauhiainen
 
-"""
-Importing libraries
-"""
+################################################
+## IMPORTING LIBRARIES
+################################################
 
+import json
 import os
 import sys
 import re
@@ -12,80 +13,137 @@ import glob
 import subprocess
 import importlib
 
-# Add local paths
-sys.path.append(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex")
-sys.path.append(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Lib\site-packages")
+################################################
+## IMPORTING MAYA CMDS
+################################################
 
-import config
-import mPipline.geoExtractionSix.geoPlanarExtraction
+try:
+    import maya.cmds as cmds            # type: ignore
+    import maya.mel as mel              # type: ignore
+    import maya.OpenMaya as om          # type: ignore
+except ImportError:
+    print("""
+    [Warning] Maya cmds module not found. This script should be run inside Maya's Python environment.
+    Exiting...
+    """)
+
+################################################
+## SETTING UP CONFIGURATION from CONFIGURATION FILE
+################################################
+
+_BASE_PATH = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex"
+_CONFIG_PATH = os.path.join(_BASE_PATH, "data", "configuration.json")
+
+_config_data = {}
+try:
+    with open(_CONFIG_PATH, "r") as _f:
+        _config_data = json.load(_f)
+except Exception as e:
+    print(f"Error loading configuration.json: {e}")
+
+# Set environment variables for the pipeline
+os.environ["BASE_DIR"] = str(_config_data.get("BASE_DIR", ""))
+os.environ["ENV_PATH"] = str(_config_data.get("ENV_PATH", ""))
+os.environ["SCRIPTS_PATH"] = str(_config_data.get("SCRIPTS_PATH", ""))
+os.environ["MODELS_PATH"] = str(_config_data.get("MODELS_PATH", ""))
+
+sys.path.append(_BASE_PATH)
+sys.path.append(os.path.join(_config_data.get("ENV_PATH", ""), "lib", "site-packages"))
+
+import config as conf
+
+_general_configuration = conf.configuration()
+
+
+################################################
+## IMPORTING PIPELINES
+################################################
+
+import mPipline.geoExtraction.geometryRenderer
+
 import mPipline.exrCollage.exrCollageGenerator
-import mPipline.geoExtractionSix.geoPlanarUVProjection
 import mPipline.exrCollage.exrCollageBroker
+
 import mPipline.mtlMaya.materialCreation
 import mPipline.uvUtils.reUvPorjection
 import mPipline.mtlMaya.mtlMaterialMapsCreation
 import mGui
+import cModels
 
+################################################
+## RELOADING PIPELINES FOR DEVELOPING
+################################################
 
 def maya_remiport_libs():
-        # Reload modules for development
-    importlib.reload(config)
-    importlib.reload(mPipline.geoExtractionSix.geoPlanarExtraction)
+    importlib.reload(conf)
+    
+    importlib.reload(mPipline.geoExtraction.geometryRenderer)
+
     importlib.reload(mPipline.exrCollage.exrCollageGenerator)
-    importlib.reload(mPipline.geoExtractionSix.geoPlanarUVProjection)
     importlib.reload(mPipline.exrCollage.exrCollageBroker)
+    
     importlib.reload(mPipline.mtlMaya.materialCreation)
     importlib.reload(mPipline.uvUtils.reUvPorjection)
     importlib.reload(mPipline.mtlMaya.mtlMaterialMapsCreation)
     importlib.reload(mGui)
+    importlib.reload(cModels)
 
 
-from config import configuration
+################################################
+## IMPORTING PIPELINES CLASSES
+################################################
 
-from mPipline.geoExtractionSix.geoPlanarExtraction import GeometryPlanarExtractor
+from mPipline.geoExtraction.geometryRenderer import MeshRenderer
+
 from mPipline.exrCollage.exrCollageGenerator import EXRCollageGenerator
-from mPipline.geoExtractionSix.geoPlanarUVProjection import GeoPlanarUVProjection
-
 from mPipline.exrCollage.exrCollageBroker import CollageSplitter
+
 from mPipline.mtlMaya.materialCreation import autoMaMaterial
 from mPipline.uvUtils.reUvPorjection import UVRetargetTool
-
 from mPipline.mtlMaya.mtlMaterialMapsCreation import mapsMaterialGenerator
 
-from mGui import mGui
-
-try:
-    import maya.cmds as cmds
-except ImportError:
-    print("[Warning] Maya cmds module not found. This script should be run inside Maya's Python environment.")
+import mGui as mayagui
+import cModels
 
 
-def getGuiConfiguration():
-    """Extracts user settings from the GUI."""
-    gui = mGui()
-    settings = gui.extract_generation_settings()
-    return settings
+################################################
+## MAIN PIPELINE CLASS
+################################################
 
-
-class geoExtractionPipeline:
-    def __init__(self):
-        self.config = getGuiConfiguration()
+class autoTexturePipeline:
+    def __init__(self, _configuration=None):
+        if _configuration is None:
+            _configuration = _general_configuration
+            
+        self.config = _configuration
 
         # maya selection
         self.selection = cmds.ls(sl=True, long=True)
 
-        # Flags
-        self.renderImages = True    
-        self.diffuseGeneration = True
-        self.upscaleTextures = True
-        self.fixSeams = True
+        ################################
+        ## PIPELINE DEBUG FLAGS
+        ################################
+        
+        self.debug_renderImages = True    
+        self.debug_diffuseGeneration = True
+        self.debug_upscaleTextures = True
+        self.debug_fixSeams = True
 
-        # Initialize Extractors and Generators
-        self.extractor = GeometryPlanarExtractor(
-            export_path=self.config.temporal_path,
-            resolution=self.config.resolution
+        self.set_tools()
+
+
+    def set_tools(self):
+        print("\n--- Setting tools ---")
+
+        ################################
+        ## INITIALIZING PIPELINE OBJECTS
+        ################################
+
+        self.extractor = MeshRenderer(
+            config=self.config
         )
         
+        """
         self.face_images = [
             os.path.join(self.config.temporal_path, f"{face}.exr") 
             for face in self.config.face_order
@@ -98,24 +156,22 @@ class geoExtractionPipeline:
             resize_to=self.config.resolution
         )
         
-        self.uv_projector = GeoPlanarUVProjection(config=self.config)
+        # self.uv_projector = GeoPlanarUVProjection(
+        #     config=self.config
+        # )
         
         self.retarget_tool = UVRetargetTool(
             self.selection[0], 
             output_dir=self.config.output_path, 
             config=self.config
-        )
+        )"""
 
     # ===== 2. Helper Methods =====
 
-    def bake_exrs(self):
-        print("\n--- 1. Baking EXRs ---")
-        if self.renderImages:
-            self.extractor.run()
-
     def setup_uvs(self):
         print("\n--- 2. Building UVs ---")
-        self.uv_projector.run(selection=self.selection)
+        # self.uv_projector.run(selection=self.selection)
+        pass
 
     def create_collages(self):
         print("\n--- 3. Building Collages ---")
@@ -256,26 +312,31 @@ class geoExtractionPipeline:
         mat_creator.assign_to_object()
 
     def run(self):
+        ##########################################
+        ## PIPELINE EXECUTION
+        ##########################################
 
-        """
-        Main function that executes full pipline.
-        Generates textures from the baked EXRs, applies seam fixing and upscaling, creates a material, and assigns it to the selected object in Maya.
-        """
+        print("\n====== Starting Automay text texturing Expo Pipeline ======")
 
         # ===== 1. Validation =====
         if not self.selection:
             print("[Error] No object selected. Please select a mesh in Maya.")
             return
-
-        print("\n====== Starting Automay text texturing Expo Pipeline ======")
         
         # getting original UVs for retargeting later
-        self.retarget_tool.getOriginalUV()
+        # self.retarget_tool.getOriginalUV()
+
+        print("\n --- 1. Baking EXRs ---")
+
+        if self.debug_renderImages:
+            self.extractor.renderMesh()
+
         
-        # getting baked exrs from maya
-        self.bake_exrs()
+
 
         # setting up planar UVs for the extraction
+
+        """
         self.setup_uvs()
 
         outputs = self.create_collages()
@@ -300,14 +361,30 @@ class geoExtractionPipeline:
 
 
         self.assign_material(mtl.getFiles())
-
+       
         print("\n====== Pipeline Complete ======")
         print(f"Final UDIM Tiles: {len(diffuse_files)}")
-        for f in diffuse_files:
-            print(f"  -> {os.path.basename(f)}")
 
+        for f in diffuse_files:
+            print(f"  -> {os.path.basename(f)}") """
+
+
+
+# ============================================
+# AUTO PIPELINE EXECUTION
+# ============================================
+
+def start_gui():
+    """Extracts user settings from the GUI."""
+    window = mayagui.automaytexGUI()
+    window.set_callback(start_pipeline)
+    window.show()
+
+def start_pipeline(_configuration=None):
+    print(f"Starting configuration: with following data: {_configuration}")
+    # pipeline = autoTexturePipeline(_configuration)
+    # pipeline.run()
 
 
 if __name__ == "__main__":
-    pipeline = geoExtractionPipeline()
-    pipeline.run()
+    start_gui()

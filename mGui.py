@@ -5,9 +5,10 @@
 """ IMPORTING LIBRARIES """
 import sys
 import os
+import psutil
+import ctypes
 
-sys.path.append(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex")
-sys.path.append(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Lib\site-packages")
+## PYSIDE IMPORTS
 
 try:
     from PySide6.QtWidgets import (
@@ -15,34 +16,23 @@ try:
         QLabel, QLineEdit, QPushButton, QComboBox, QSlider, QCheckBox,
         QFrame, QFileDialog, QSpinBox, QTextEdit
     )
-
-    from PySide6.QtCore import Qt, QTimer
+    from PySide6.QtCore import Qt, QTimer, Signal
     from PySide6.QtGui import QPainter, QColor, QPen, QFont
-    
 except ImportError:
-
     from PySide2.QtWidgets import (  # type: ignore
         QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
         QLabel, QLineEdit, QPushButton, QComboBox, QSlider, QCheckBox,
         QFrame, QFileDialog, QSpinBox, QTextEdit
-    ) # type: ignore
-    
-    from PySide2.QtCore import Qt, QTimer  # type: ignore
+    )
+    from PySide2.QtCore import Qt, QTimer, Signal  # type: ignore
     from PySide2.QtGui import QFont, QColor, QPainter, QPen  # type: ignore
 
-from dataclasses import dataclass
-from typing import List, Optional
 
+## PIPELINE IMPORTS
 
-from cModels import lModels
+from cModels import cModels
 from config import configuration
 
-try:
-    import psutil
-except:
-    pass
-
-import ctypes
 
 def get_nvml_vram():
     try:
@@ -67,19 +57,28 @@ def get_nvml_vram():
         return 0, 0
 
 
+# -----------------------------
+# MAIN GUI CLASS
+# -----------------------------
+
 class automaytexGUI(QMainWindow):
+    texturize_signal = Signal(object)
+
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("AutomaytexMaya")
         self.setGeometry(100, 100, 1200, 700)
         self.setStyleSheet("Fusion")
-
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+        
         self.reference_images = []
-        self.models = lModels()
+        self.models = cModels()
 
         self.populate()
 
+    def set_callback(self, callback):
+        self.texturize_callback = callback
 
     def populate(self):
         main_widget = QWidget()
@@ -521,20 +520,24 @@ class automaytexGUI(QMainWindow):
             return "System info unavailable"
     
     def _on_texturize(self):
-        print(f"Starting Asset texturization: CURRENT settings:")
         settings = self.extract_generation_settings()
-        print(f"returned texturization settings: {settings.printdata()}")
+
+        self.texturize_signal.emit(settings)
 
     def extract_generation_settings(self):
         dConf = configuration()
+
         dConf.positive_prompt = self.prompt_input.toPlainText()
         dConf.negative_prompt = self.n_prompt_input.toPlainText()
         dConf.texture_resolution = self.texture_combo.currentText()
         dConf.inference_steps = self.steps_slider.value()
+
         dConf.cfg_scale = self.cfg_slider.value() / 10.0
         dConf.noise = self.noise_slider.value() / 100.0
+
         dConf.seed = 123456789  # could add a random seed generator or input field
         dConf.generated_images = []
+
         if self.diffuse_check.isChecked():
             dConf.generated_images.append("diffuse")
         if self.roughness_check.isChecked():
@@ -545,19 +548,24 @@ class automaytexGUI(QMainWindow):
             dConf.generated_images.append("normal")
         if self.height_check.isChecked():
             dConf.generated_images.append("height")
+        
         dConf.base_model = self.model_combo.currentText().lower()
         dConf.system_prfered = self.system_combo.currentText()
         quant_text = self.quant_combo.currentText()
+
         dConf.quantization = quant_text if quant_text != "None" else None
         dConf.assign_maya_material = self.assign_maya_check.isChecked()
         dConf.material_type = self.material_combo.currentText()
         dConf.output_path = self.save_path_input.text() if self.save_path_input.text() else dConf.output_path
-        
-        # manualn validation method to handle correctly data.
-        dConf.validate()
+
+        dConf.material_name = self.material_name_input.text()
+
+        dConf.pathsetter()
+
+        # manual validation method to handle correctly data.
+        # dConf.validate()
         
         return dConf
-
 
 # -----------------------------
 # SQUARE USAGE BAR
@@ -644,6 +652,3 @@ def main():
     window = automaytexGUI()
     window.show()
     sys.exit(app.exec())
-
-window = automaytexGUI()
-window.show()

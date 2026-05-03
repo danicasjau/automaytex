@@ -2,13 +2,16 @@
 # CONFIGURATION .py file
 
 from dataclasses import dataclass
+import os
+
+################################################
+## VALIDATION VARIABLES
+################################################
 
 @dataclass
 class validation:
     base_model = ["sdxl", "sd15"]
-
     quantization = [None, "fp16", "int8", "int4", "bf16", "fp32"]
-
     material_types = ["mtlx", "standard"]
 
     texture_resolutions = {
@@ -20,22 +23,35 @@ class validation:
     }
 
 
-@dataclass
+################################################
+## DEFAULT PATHS - from JSON CONFIG FILE
+################################################
+
 class paths:
-    BASE_DIR = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex"
-    python_exe = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Scripts\python.exe"
+    BASE_DIR = os.environ.get("BASE_DIR")
+    ENV_PATH = os.environ.get("ENV_PATH")
+    SCRIPTS_PATH = os.environ.get("SCRIPTS_PATH")
+    MODELS_PATH = os.environ.get("MODELS_PATH")
 
-    # MODELS PATHS
-    base_model = r"E:\Program Files\ComfyUI\ComfyUI\models\checkpoints\juggernautXL_v9Rdphoto2Lightning.safetensors"
-    controlnet = r"E:\Program Files\ComfyUI\ComfyUI\models\controlnet\diffusion_pytorch_model_promaxx.safetensors"
-    depth_model = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\models\depth_anything_vitl14"
+    python_exe = os.path.join(ENV_PATH or "", "Scripts", "python.exe")
 
+    # MODELS PATHSs
+    diffusion_model = os.path.join(MODELS_PATH or "", "checkpoints", "juggernautXL_v9Rdphoto2Lightning.safetensors")
+    controlnet_model = os.path.join(MODELS_PATH or "", "controlnet", "diffusion_pytorch_model_promaxx.safetensors")
+    depth_model = os.path.join(MODELS_PATH or "", "models", "depth_anything_vitl14")
+
+
+
+
+
+################################################
+## DEFAULT CONFIGURATION
+################################################
 
 @dataclass
 class configuration:
-
+    
     # System Paths
-
     script_name = "mPiplineCreationSDXL.py"
 
     # MODELS PATHS
@@ -49,11 +65,13 @@ class configuration:
     ip_adapter_weight_name = "ip-adapter-plus_sdxl_vit-h.safetensors"
     ip_adapter_scale = 0.7
 
+
     quantization = "fp16"
+    resolution = 1024
 
     # PATHS
  
-    material_name = f"material01"
+    material_name = f"basicmaterial"
 
     temporal_path = f"{paths.BASE_DIR}/output/{material_name}/temp"
     textures_path = f"{paths.BASE_DIR}/output/{material_name}/textures"
@@ -79,6 +97,8 @@ class configuration:
     seed = 123456789
 
     generated_images = ["diffuse", "roughness", "metalness", "normal", "height"]
+
+    face_order = ["face_0", "face_1", "face_2", "face_3"]
 
     # -------------------------------
     # SYSTEM 
@@ -110,17 +130,29 @@ class configuration:
     seam_fixer_strength = 0.55
     seam_fixer_steps = 25
 
+
     def printdata(self):
         return f"""
+        MATERIAL NAME: {self.material_name}
+        OUTPUT PATH: {self.output_path}
+
+
+
         BASE MODEL: {self.base_model}
         CONTROLNET MODEL: {self.controlnet_model}
         IP-ADAPTER MODEL: {self.ip_adapter_model}
         IP-ADAPTER SCALE: {self.ip_adapter_scale}
+
+
         QUANTIZATION: {self.quantization}
         MATERIAL TYPE: {self.material_type}
         TEXTURE RESOLUTION: {self.texture_resolution}
+
+
         POSITIVE PROMPT: {self.positive_prompt}
         NEGATIVE PROMPT: {self.negative_prompt}
+
+
         INFERENCE STEPS: {self.inference_steps}
         CFG SCALE: {self.cfg_scale}
         NOISE: {self.noise}
@@ -138,6 +170,18 @@ class configuration:
         SEAM FIXER STEPS: {self.seam_fixer_steps}
         """
 
+    def pathsetter(self):
+        self.output_path = os.path.join(paths.BASE_DIR, "output", self.material_name)
+        self.temporal_path = os.path.join(self.output_path, "temp")
+        self.textures_path = os.path.join(self.output_path, "textures")
+
+        if not os.path.exists(self.output_path):
+            os.makedirs(self.output_path)
+        if not os.path.exists(self.temporal_path):
+            os.makedirs(self.temporal_path)
+        if not os.path.exists(self.textures_path):
+            os.makedirs(self.textures_path)
+
     def validate(self):
         v = validation()
         if self.material_type not in v.material_types:
@@ -146,11 +190,5 @@ class configuration:
             raise ValueError(f"Invalid texture resolution: {self.texture_resolution}. Must be one of {list(v.texture_resolutions.keys())}.")
         if self.base_model not in v.base_model:
             raise ValueError(f"Invalid base model: {self.base_model}. Must be one of {v.base_model}.")
-        
 
 
-if __name__ == "__main__":
-    config = configuration()
-    config.base_model = "sd154334"
-    config.validate()
-    print(config.printdata())

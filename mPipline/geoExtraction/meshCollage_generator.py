@@ -1,46 +1,42 @@
 
 from __future__ import annotations
 
+## IMPORT LIBS
+
 import os
 import sys
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
-
-sys.path.append(r"D:\DANI\PROJECTS_2026\autotexturingmaya\env\menv\lib\site-packages")
-sys.path.append(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex")
-
 import numpy as np
 import OpenEXR
 import Imath
-
 from PIL import Image as PILImage
 
 
 DEPTH_SATURATION: float = 0.82        
-RESIZE_TO: Optional[int] = None        
-
-
+RESIZE_TO: Optional[int] = None
 _FLOAT = Imath.PixelType(Imath.PixelType.FLOAT)
 
 
-# EXR UTILS 
+###########################################
+## EXR UTILS 
+###########################################
 
-def _open_exr(path: str) -> OpenEXR.InputFile:
+def _open_exr(path: str):
     if not os.path.isfile(path):
         raise FileNotFoundError(f"EXR file not found: {path}")
     return OpenEXR.InputFile(path)
 
-def _exr_size(exr: OpenEXR.InputFile) -> Tuple[int, int]:
+def _exr_size(exr: OpenEXR.InputFile):
     dw     = exr.header()["dataWindow"]
     width  = dw.max.x - dw.min.x + 1
     height = dw.max.y - dw.min.y + 1
     return width, height
 
-def _available_channels(exr: OpenEXR.InputFile) -> List[str]:
+def _available_channels(exr: OpenEXR.InputFile):
     return list(exr.header()["channels"].keys())
 
-def _find_channel(channels: List[str], candidates: List[str]) -> Optional[str]:
-    """Return the first candidate present in channels (case-insensitive)."""
+def _find_channel(channels: List[str], candidates: List[str]):
     lower_map = {c.lower(): c for c in channels}
     for cand in candidates:
         found = lower_map.get(cand.lower())
@@ -48,10 +44,7 @@ def _find_channel(channels: List[str], candidates: List[str]) -> Optional[str]:
             return found
     return None
 
-def _read_channel(exr: OpenEXR.InputFile,
-                  name: str,
-                  width: int,
-                  height: int) -> np.ndarray:
+def _read_channel(exr: OpenEXR.InputFile, name: str, width: int, height: int):
     raw = exr.channel(name, _FLOAT)
     return np.frombuffer(raw, dtype=np.float32).reshape(height, width)
 

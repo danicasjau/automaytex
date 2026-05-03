@@ -16,7 +16,6 @@ import os
 import math
 import sys
 
-
 # ----------------------------------------------------------
 # Regular tetrahedron face normals (outward, unit vectors)
 # and matching camera rotations (rx, ry, rz in degrees).
@@ -342,14 +341,3 @@ class GeometryPlanarExtractor:
         print(f"  Output folder : {self.export_path}")
         print(f"  Views rendered: {list(all_passes.keys())}")
         return all_passes
-
-
-# ==============================
-# RUN
-# ==============================
-if __name__ == "__main__":
-    extractor = GeometryPlanarExtractor(
-        export_path=r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\temp",
-        resolution=512
-    )
-    extractor.run()
