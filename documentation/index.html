@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUTOMAYTEX Documentation | Daniel Casadevall</title>
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --primary-color: #ec8a22;
+            --secondary-color: #2563eb;
+            --text-main: #1d242f;
+            --text-light: #414b58;
+            --bg-light: #f8fafc;
+            --border-color: #e2e8f0;
+            --code-bg: #1e293b;
+        }
+
+        body {
+            font-family: 'IBM Plex Mono', 'Segoe UI', monospace;
+            margin: 0;
+            display: flex;
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Sidebar Styling */
+        #sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--bg-light);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        #logo-container {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        #logo-container h1 {
+            font-size: 1.2rem;
+            margin: 10px 0 0;
+            color: var(--primary-color);
+            letter-spacing: 2px;
+        }
+
+        .nav-group {
+            margin-bottom: 25px;
+        }
+
+        .nav-group h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-light);
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+
+        .nav-group ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-group li {
+            margin-bottom: 8px;
+        }
+
+        .nav-group a {
+            text-decoration: none;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .nav-group a:hover {
+            color: var(--primary-color);
+        }
+
+        /* Main Content */
+        #content {
+            margin-left: var(--sidebar-width);
+            padding: 40px 80px;
+            max-width: 1000px;
+        }
+
+        section {
+            margin-bottom: 80px;
+            scroll-margin-top: 40px;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        h3 {
+            color: var(--secondary-color);
+            margin-top: 30px;
+        }
+
+        .lang-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            color: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        .file-structure {
+            background: #f1f5f9;
+            border: 1px dashed #64748b;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .decision-card {
+            border-left: 4px solid var(--primary-color);
+            background: #fffaf5;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-light);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav id="sidebar">
+        <div id="logo-container">
+            <h1>AUTOMAYTEX</h1>
+            <p style="font-size: 0.7rem; color: #64748b;">MAYA 2026 PLUGIN</p>
+        </div>
+
+        <div class="nav-group">
+            <h3>Project Overview</h3>
+            <ul>
+                <li><a href="#eng-ver">English Documentation</a></li>
+                <li><a href="#cat-ver">Documentació en Català</a></li>
+            </ul>
+        </div>
+
+        <div class="nav-group">
+            <h3>Technical Specs</h3>
+            <ul>
+                <li><a href="#pipeline">The AI Pipeline</a></li>
+                <li><a href="#decisions">Design Decisions</a></li>
+                <li><a href="#ai-validation">IA Validation</a></li>
+            </ul>
+        </div>
+
+        <div class="nav-group">
+            <h3>Implementation</h3>
+            <ul>
+                <li><a href="#files">File Structure</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main id="content">
+        <header>
+            <p><strong>Author:</strong> Daniel Casadevall Jauhiainen</p>
+            <p><strong>Target:</strong> Autodesk Maya 2026</p>
+        </header>
+
+        <hr>
+
+        <!-- English Version -->
+        <section id="eng-ver">
+            <h2><span class="lang-badge">EN</span> Introduction</h2>
+            <p><strong>Automaytex</strong> is a high-performance Maya plugin designed to bridge the gap between 3D
+                geometry and Generative AI. It automates a complex "Bake-Diffuse-Reproject" workflow, allowing artists
+                to texture assets using state-of-the-art Diffusion Models (SDXL, Flux, SD1.5) directly within the Maya
+                viewport.</p>
+
+            <h3>Core Concept</h3>
+            <p>The engine bakes geometric data into a specialized 2x2 collage, processes this data via
+                <strong>ControlNet</strong>, and reprojects the resulting AI-generated texture back onto the original
+                mesh with UV integrity.
+            </p>
+
+            <div class="decision-card">
+                <h4>Why the Tetrahedron?</h4>
+                <p>Initial versions used a 6-plane box projection. However, this created excessive redundancy and
+                    inefficient aspect ratios for Diffusion Models. The current <strong>Tetrahedral Strategy</strong>
+                    uses 4 optimized viewpoints in a 2x2 grid, maximizing VRAM efficiency and reducing reprojection
+                    artifacts.</p>
+            </div>
+        </section>
+
+        <!-- Catalan Version -->
+        <section id="cat-ver">
+            <h2><span class="lang-badge">CAT</span> Documentació</h2>
+            <p><strong>Automaytex</strong> és un plugin per a Autodesk Maya 2026 que automatitza la creació de textures
+                mitjançant models de difusió. L'objectiu és extreure la informació visual d'una geometria,
+                transformar-la amb IA i tornar-la a projectar de forma coherent.</p>
+
+            <h3>Flux de Treball</h3>
+            <ul>
+                <li><strong>Pre-step:</strong> Emmagatzematge de les UVs originals per garantir un retargeting perfecte.
+                </li>
+                <li><strong>Pas 01:</strong> Extracció de dades geomètriques (Normals i Depth) mitjançant l'API
+                    d'Arnold.</li>
+                <li><strong>Pas 02:</strong> Generació amb IA (SDXL/Flux) utilitzant quantitització dinàmica segons la
+                    VRAM local.</li>
+            </ul>
+        </section>
+
+        <!-- Technical Pipeline -->
+        <section id="pipeline">
+            <h2>Technical Specifications</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Specification</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Host Platform</strong></td>
+                        <td>Autodesk Maya 2026</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Render Engine</strong></td>
+                        <td>Arnold API (Python Implementation)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Supported Models</strong></td>
+                        <td>Flux, SDXL, Stable Diffusion 1.5</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Geometry Capture</strong></td>
+                        <td>4-point Rectangular Tetrahedron</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Optimization</strong></td>
+                        <td>Local Quantization based on RAM/VRAM</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- AI Validation -->
+        <section id="ai-validation">
+            <h2>AI Usage & Validation</h2>
+            <p>In the development of Automaytex, AI tools were utilized strategically:</p>
+            <ul>
+                <li><strong>Code Generation:</strong> LLMs helped optimize complex <code>Arnold API</code> calls and the
+                    mathematical rotation matrices for the tetrahedral camera setup.</li>
+                <li><strong>Manual Validation:</strong> Every AI-generated shader node and projection network was
+                    manually audited in the Maya <strong>Hypergraph</strong>. We tuned the ControlNet weight
+                    distribution by hand to ensure geometric edges remained crisp and free of "hallucinations."</li>
+            </ul>
+        </section>
+
+        <!-- File Structure -->
+        <section id="files">
+            <h2>File Structure</h2>
+            <div class="file-structure">
+                project-root/<br>
+                ├── src/<br>
+                │ ├── main.py <span style="color: #64748b;"># UI & Maya Orchestrator</span><br>
+                │ └── engine.py <span style="color: #64748b;"># AI Pipeline & Diffusion Logic</span><br>
+                ├── templates/<br>
+                │ └── default.tex <span style="color: #64748b;"># Documentation Templates</span><br>
+                ├── config.yaml <span style="color: #64748b;"># Quantization & Model paths</span><br>
+                ├── rules.json <span style="color: #64748b;"># AI transformation rules</span><br>
+                └── logo.svg
+            </div>
+        </section>
+    </main>
+
+</body>
+
+</html>

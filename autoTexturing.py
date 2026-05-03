@@ -56,8 +56,8 @@ class geoExtractionPipeline:
 
         # Flags
         self.renderImages = True    
-        self.diffuseGeneration = True
-        self.upscaleTextures = True
+        self.diffuseGeneration = False
+        self.upscaleTextures = False
         self.fixSeams = True
 
         # Initialize Extractors and Generators
@@ -123,18 +123,19 @@ class geoExtractionPipeline:
 
         return outputs
 
-    def retarget_normal(self, normal_collage_path):
+    def retarget_normal(self, normal_collage_path, mtl_name="normal_source"):
         print("\n--- 4. Retargeting Normal to Original UVs ---")
 
         splitter = CollageSplitter(
             collage_path=normal_collage_path,
-            material_name="normal_source",
+            material_name=mtl_name,
             output_root=self.config.output_path,
             output_size=self.config.resolution
         )
         normal_udim_tiles = splitter.run()
 
         self.retarget_tool.setMaterialTextures(normal_udim_tiles)
+        self.retarget_tool.createTetrahedralPlanarUV()
         self.retarget_tool.retargetToOriginalUV(resolution=self.config.resolution)
 
         normal_tiles = []
@@ -268,23 +269,27 @@ class geoExtractionPipeline:
         
         self.retarget_tool.getOriginalUV()
         
-        # self.bake_exrs()
-        # self.setup_uvs()
-        # self.create_collages()
-
         outputs = self.extract_full_meshRender()
+        print("Outputs: ", outputs)
 
         normal_path = outputs.get("normals")
+        print("Normal Path: ", normal_path)
 
+        diffuse_files = self.generate_diffuse_textures(normal_path)
+
+        ingested_file = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\testoutput\diffusion.png"
+        
         normal_tiles = self.retarget_normal(normal_path)
-
-        diffuse_files = self.generate_diffuse_textures(normal_tiles)
+        diffusion_tiles = self.retarget_normal(ingested_file, mtl_name="diffusion_source")
+        print("Normal Tiles: ", normal_tiles)
+        print("Diffusion Tiles: ", diffusion_tiles)
 
         print("\nGENERATION COMPLEATED: diffuse_files:", diffuse_files)
 
         # fixed_files = self.apply_seam_fixing(diffuse_files)
 
-        upscaled_files = self.upscale_textures(diffuse_files)
+        upscaled_files = self.upscale_textures(normal_tiles)
+        print("Upscaled Files: ", upscaled_files)
 
         mtl = mapsMaterialGenerator(upscaled_files[0], normal_tiles[0])
         mtl.setOutputPath(self.config.output_path)

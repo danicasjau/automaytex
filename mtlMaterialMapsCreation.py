@@ -257,8 +257,8 @@ class PBRMapGenerator:
 
 
 if __name__ == "__main__":
-    image_path = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\output\main.png"
-    nomralPath = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\output\depth_retarget_1001.png"
+    image_path = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\texturesOutput\escaled\diffuse_2_upscaled.png"
+    nomralPath = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\texturesOutput\escaled\diffuse_2_upscaled.png"
 
     material = mapsMaterialGenerator(image_path, nomralPath)
     material.create()
