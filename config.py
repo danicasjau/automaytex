@@ -189,6 +189,40 @@ class configuration:
         SEAM FIXER STEPS: {self.seam_fixer_steps}
         """
 
+    def dict(self):
+        return {
+            "material_name": self.material_name,
+            "output_path": self.output_path,
+
+            "base_model": self.base_model,
+            "controlnet_model": self.controlnet_model,
+            "ip_adapter_model": self.ip_adapter_model,
+            "ip_adapter_scale": self.ip_adapter_scale,
+
+            "quantization": self.quantization,
+            "material_type": self.material_type,
+            "texture_resolution": self.texture_resolution,
+
+            "positive_prompt": self.positive_prompt,
+            "negative_prompt": self.negative_prompt,
+
+            "inference_steps": self.inference_steps,
+            "cfg_scale": self.cfg_scale,
+            "noise": self.noise,
+            "seed": self.seed,
+            "generated_images": self.generated_images,
+            "system_prfered": self.system_prfered,
+            "assign_maya_material": self.assign_maya_material,
+            "uv_chunk_size": self.uv_chunk_size,
+            "ortho_padding": self.ortho_padding,
+            "depth_saturation": self.depth_saturation,
+            "material_base_name": self.material_base_name,
+            "retarget_uv_set_name": self.retarget_uv_set_name,
+            "camera_name": self.camera_name,
+            "seam_fixer_strength": self.seam_fixer_strength,
+            "seam_fixer_steps": self.seam_fixer_steps,
+        }
+
     def pathsetter(self):
         self.output_path = os.path.join(paths.BASE_DIR, "output", self.material_name)
         self.temporal_path = os.path.join(self.output_path, "temp")

@@ -11,8 +11,9 @@ print("""
 # Add project root to sys.path
 sys.path.append(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\server")
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
 from cModels import diffModels
+from diffgenSDXL import DiffGenSDXL
 
 app = FastAPI()
 models = diffModels()
@@ -22,12 +23,16 @@ models = diffModels()
 def ping():
     return {"status": "ok"}
 
-@app.get("/generate")
-def generate(prompt: str = "default"):
+@app.post("/generatetexture")
+def generate_texture(configuration: dict = Body(...)):
+
+    pipeGen = DiffGenSDXL(models, configuration)
+    saved_path = pipeGen.generate()
+
     return {
+        "state": "success",
         "message": "generation complete",
-        "prompt": prompt,
-        "result": f"generated_texture_for_{prompt}"
+        "output_path": saved_path,
     }
 
 @app.get("/loadallmodels")

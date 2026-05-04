@@ -25,7 +25,7 @@
             "hugging_face_url": "https://huggingface.co/LiheYoung/depth-anything-vitl14/tree/main",
             "download_name": "depth_anything_vitl14",
             "installation_path": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/models/",
-            "installation_name": "model.safetensors"
+            "installation_name": "depth_anything_vitl14"
         }
     ]
 }
