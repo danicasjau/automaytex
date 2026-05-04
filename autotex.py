@@ -88,6 +88,7 @@ def maya_remiport_libs():
     importlib.reload(mGui)
     importlib.reload(cModels)
 
+maya_remiport_libs()
 
 ################################################
 ## IMPORTING PIPELINES CLASSES
@@ -142,6 +143,11 @@ class autoTexturePipeline:
         self.extractor = MeshRenderer(
             config=self.config
         )
+
+        self.retarget_tool = UVRetargetTool(
+            self.selection[0], 
+            config=self.config
+        )
         
         """
         self.face_images = [
@@ -160,52 +166,40 @@ class autoTexturePipeline:
         #     config=self.config
         # )
         
-        self.retarget_tool = UVRetargetTool(
-            self.selection[0], 
-            output_dir=self.config.output_path, 
-            config=self.config
-        )"""
+        """
 
     # ===== 2. Helper Methods =====
 
-    def setup_uvs(self):
-        print("\n--- 2. Building UVs ---")
-        # self.uv_projector.run(selection=self.selection)
-        pass
-
-    def create_collages(self):
-        print("\n--- 3. Building Collages ---")
-        return self.prep.run()
-
-    def retarget_normal(self, normal_collage_path):
-        print("\n--- 4. Retargeting Normal to Original UVs ---")
+    def retarget_collage(self, collage_path, name=None):
+        print(f"\n--- 4. Retargeting {name} to Original UVs ---")
 
         splitter = CollageSplitter(
-            collage_path=normal_collage_path,
-            material_name="normal_source",
+            collage_path=collage_path,
+            material_name=f"{name}_source",
             output_root=self.config.output_path,
             output_size=self.config.resolution
         )
-        normal_udim_tiles = splitter.run()
 
-        self.retarget_tool.setMaterialTextures(normal_udim_tiles)
+        tiles = splitter.run()
+
+        self.retarget_tool.setMaterialTextures(tiles)
         self.retarget_tool.retargetToOriginalUV(resolution=self.config.resolution)
 
-        normal_tiles = []
+        tiles = []
         raw_tiles = glob.glob(os.path.join(self.config.output_path, "retarget_*.png"))
-        
+
         for f in raw_tiles:
             udim_match = re.search(r"10\d{2}", os.path.basename(f))
             if udim_match:
                 udim = udim_match.group()
-                new_path = os.path.join(self.config.output_path, f"depth_retarget_{udim}.png")
+                new_path = os.path.join(self.config.output_path, f"{name}_retarget_{udim}.png")
                 if os.path.exists(new_path):
                     os.remove(new_path)
                 os.rename(f, new_path)
-                normal_tiles.append(new_path)
+                tiles.append(new_path)
         
-        print(f"[Info] Generated {len(normal_tiles)} retargeted normal tiles.")
-        return normal_tiles
+        print(f"[Info] Generated {len(tiles)} retargeted {name} tiles.")
+        return tiles
 
     def generate_diffuse_textures(self, normal_tiles):
         print("\n--- 5. AI Diffusion Generation (per UDIM) ---")
@@ -324,16 +318,44 @@ class autoTexturePipeline:
             return
         
         # getting original UVs for retargeting later
-        # self.retarget_tool.getOriginalUV()
+        
+        self.retarget_tool.getOriginalUV()
 
+        ##########################################
+        ## NORMAL BAKING - MESH RENDERING
+        ##########################################
         print("\n --- 1. Baking EXRs ---")
-
         if self.debug_renderImages:
             self.extractor.renderMesh()
 
+        extraction_output = self.extractor.getOutputs()
+        print("\n [INFO] Rendered tiles EXRs: ", extraction_output)
+        self.retarget_tool.createTetrahedralPlanarUV() # --> sets planarUV map for retargeting
+
+        ##########################################
+        ## DIFFUSION MODEL
+        ##########################################
+        print("\n --- 2. Retargeting Diffusion for cleaning ---")
+        if self.debug_diffuseGeneration and False:
+            diffuse_files = self.generate_diffuse_textures(normal_tiles)
+        else:
+            diffuse_files = extraction_output.get("rgba")
+
+        ##########################################
+        ## DIFFUSION RETARGETING FOR CLEANING
+        ##########################################
+        print("\n --- 2. Retargeting Diffusion for cleaning ---")
+        diffusion_tiles = self.retarget_collage(diffuse_files, name="diffusion")
+        print("\n [INFO] Retargeted diffusion tiles: ", diffusion_tiles)
+
+        ##########################################
+        ## NORMAL RETARGETING FOR CLEANING
+        ##########################################
+        print("\n --- 3. Retargeting Normals for cleaning ---")
+        normal_path = extraction_output.get("normals")
+        normal_tiles = self.retarget_collage(normal_path, name="normal")
+        print("\n [INFO] Retargeted normal tiles: ", normal_tiles)
         
-
-
         # setting up planar UVs for the extraction
 
         """

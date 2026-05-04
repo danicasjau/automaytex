@@ -4,6 +4,10 @@ import os
 
 from mPipline.geoExtraction import meshCollage_generator, meshReProjectUV, meshTetrahedron_render
 
+## UTILS
+
+
+
 class MeshRenderer:
     def __init__(self, config):
         self.conf = config
@@ -15,6 +19,8 @@ class MeshRenderer:
             output_dir=self.conf.temporal_path,
             config=self.conf
         )
+
+        self.outputs = None
         
     def renderMesh(self):
         self.retargetTool.getOriginalUV()
@@ -24,6 +30,7 @@ class MeshRenderer:
         extractor = meshTetrahedron_render.GeometryPlanarExtractor(
             export_path=self.conf.temporal_path,
             resolution=self.conf.resolution/2,
+            camera_scale=self.conf.camera_scale
         )
 
         extractor.run()
@@ -36,9 +43,11 @@ class MeshRenderer:
             resize_to        = self.conf.resolution,
         )
 
-        outputs = gen.run()
+        self.outputs = gen.run()
+        return self.outputs
 
-        return outputs
+    def getOutputs(self):
+        return self.outputs
 
 def main():
     renderer = MeshRenderer()

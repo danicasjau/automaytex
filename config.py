@@ -120,6 +120,9 @@ class configuration:
     
     uv_chunk_size = 500
     ortho_padding = 0.08
+    camera_scale = 1
+
+    
     depth_saturation = 0.5
 
     material_base_name = "extracted_diffuse"

@@ -309,7 +309,8 @@ class automaytexGUI(QMainWindow):
         noise_layout.addWidget(self.noise_slider)
         noise_layout.addWidget(self.noise_label)
         layout.addLayout(noise_layout)
-        
+
+
         # Separator before generated images
         separator4 = QFrame()
         separator4.setFrameShape(QFrame.HLine)
@@ -534,6 +535,7 @@ class automaytexGUI(QMainWindow):
 
         dConf.cfg_scale = self.cfg_slider.value() / 10.0
         dConf.noise = self.noise_slider.value() / 100.0
+        dConf.camera_scale = 0.70
 
         dConf.seed = 123456789  # could add a random seed generator or input field
         dConf.generated_images = []

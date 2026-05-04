@@ -79,10 +79,11 @@ def _tetrahedron_views():
 
 
 class GeometryPlanarExtractor:
-    def __init__(self, export_path=None, resolution=None):
+    def __init__(self, export_path=None, resolution=None, camera_scale=1.5):
 
-        self.export_path = export_path
-        self.resolution  = resolution
+        self.export_path  = export_path
+        self.resolution   = resolution
+        self.camera_scale = camera_scale
         self.cam_name    = "faceCamera"
         self.cam_shape   = None
 
@@ -270,8 +271,8 @@ class GeometryPlanarExtractor:
         cam_y = cy + ny * dist
         cam_z = cz + nz * dist
 
-        # Orthographic width = bounding-sphere diameter × padding
-        ortho_w  = bb_radius * 2.0 * (1.0 + 0.1)
+        # Orthographic width = bounding-sphere diameter × padding × camera_scale
+        ortho_w  = bb_radius * 2.0 * 1.1 * self.camera_scale
 
         cmds.setAttr(self.cam_name + ".translateX", cam_x)
         cmds.setAttr(self.cam_name + ".translateY", cam_y)

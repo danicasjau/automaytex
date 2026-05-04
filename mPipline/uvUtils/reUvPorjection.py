@@ -56,13 +56,14 @@ class UVRetargetTool:
         ``retarget_uv_set_name``.
     """
 
-    def __init__(self, mesh, output_dir=None, config=None):
+    def __init__(self, mesh, config=None):
         if config is None:
             from config import configuration          # type: ignore[import]
             config = configuration()
+    
         self.config = config
         self.mesh   = mesh
-        self.output_dir = output_dir or self.config.output_path
+        self.output_dir = self.config.output_path
 
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -190,7 +191,9 @@ class UVRetargetTool:
         dz = bb_max[2] - bb_min[2]
         bb_radius = 0.5 * math.sqrt(dx*dx + dy*dy + dz*dz)
         if bb_radius == 0.0: bb_radius = 1.0
-        ortho_w = bb_radius * 2.0 * (1.0 + 0.1)
+        # Use camera_scale from config to match rendering
+        camera_scale = getattr(self.config, "camera_scale", 1.0)
+        ortho_w = bb_radius * 2.0 * 1.1 * camera_scale
 
         s2 = math.sqrt(2)
         s23 = math.sqrt(2.0 / 3.0)
@@ -319,8 +322,10 @@ class UVRetargetTool:
         dst_uv_set = self._get_target_uv_set(fn)
         
         if src_uv_set not in fn.getUVSetNames():
-            print(f"[WARNING] Mesh '{self.mesh}' is missing '{src_uv_set}'.")
-            return
+            print(f"[INFO] Mesh '{self.mesh}' is missing '{src_uv_set}'. Creating tetrahedral projection...")
+            # self.createTetrahedralPlanarUV()
+            # Refresh MFnMesh to recognize the new UV set
+            fn = om.MFnMesh(dag)
 
         # ── 2. Load source UDIM tiles ──────────────────────────────────
         src_images: dict[int, Image.Image] = {}
