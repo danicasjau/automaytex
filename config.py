@@ -10,7 +10,7 @@ import os
 
 @dataclass
 class validation:
-    base_model = ["sdxl", "sd15"]
+    base_model = ["sdxl", "fast_sdxl", "flash_sdxl"]
     quantization = [None, "fp16", "int8", "int4", "bf16", "fp32"]
     material_types = ["mtlx", "standard"]
 
@@ -64,7 +64,7 @@ class configuration:
 
     # MODELS PATHS
 
-    base_model = "sdxl"
+    base_model = "fast_sdxl"
     controlnet_model = "diffusers/controlnet-normal-sdxl-1.0"
 
     ip_adapter_model = "h94/IP-Adapter"

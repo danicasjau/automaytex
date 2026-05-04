@@ -39,7 +39,7 @@ DTYPE_MAP = {
     "int4": torch.float16,
 }
 
-SUPPORTED_BASE_MODELS = ["sdxl", "sd15"]
+SUPPORTED_BASE_MODELS = ["sdxl", "sd15", "fast_sdxl", "flash_sdxl"]
 SUPPORTED_QUANTIZATIONS = [None, "fp16", "int8", "int4", "bf16", "fp32"]
 
 # ---------------------------------------------------------------------------
@@ -62,6 +62,8 @@ class diffModels:
 
         # CPU offload flag (moves layers to CPU between forward passes)
         self.cpu_offload = getattr(self.config, "cpu_offload", False)
+
+        self.diffusion_model_type = getattr(self.config, "base_model")
 
         # Public handles – None until load_all() is called
         self.diffusion_model = None   # StableDiffusionXLControlNetPipeline
@@ -253,7 +255,7 @@ class diffModels:
             )
 
         # 3. Resolve local paths from catalogue
-        base_path       = self._get_local_path("sdxl")        # always SDXL here
+        base_path       = self._get_local_path(self.diffusion_model_type) # "sdxl")        # always SDXL here
         controlnet_path = self._get_local_path("controlnet")
         depth_path      = self._get_local_path("depth")
         # vae_path        = getattr(self.config, "vae_path", "")  # optional
@@ -269,6 +271,10 @@ class diffModels:
 
         # 6. Diffusion pipeline
         if base_model_name == "sdxl":
+            self.pipe = self._load_sdxl_pipeline(base_path, controlnet)#, vae)
+        elif base_model_name == "fast_sdxl":
+            self.pipe = self._load_sdxl_pipeline(base_path, controlnet)#, vae)
+        elif base_model_name == "flash_sdxl":
             self.pipe = self._load_sdxl_pipeline(base_path, controlnet)#, vae)
         elif base_model_name == "sd15":
             # SD1.5 branch – extend here with StableDiffusionControlNetPipeline

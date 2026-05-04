@@ -68,6 +68,7 @@ class autoMaMaterial:
 
         if slot == "height":
             disp_node = cmds.shadingNode("displacementShader", asShader=True)
+            cmds.setAttr(disp_node + ".scale", 0.01)
             cmds.connectAttr(file_node + ".outAlpha", disp_node + ".displacement", force=True)
             cmds.connectAttr(disp_node + ".displacement", self.shading_group + ".displacementShader", force=True)
             try: cmds.setAttr(file_node + ".colorSpace", "Raw", type="string")

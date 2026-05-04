@@ -26,6 +26,24 @@
             "download_name": "depth_anything_vitl14",
             "installation_path": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/models/",
             "installation_name": "depth_anything_vitl14"
+        },
+        {
+            "id": 4,
+            "name": "fast_sdxl",
+            "model_name": "SDXL lightning 4step",
+            "hugging_face_url": "https://huggingface.co/ByteDance/SDXL-Lightning/tree/main/sdxl_lightning_4step.safetensors",
+            "download_name": "sdxl_lightning_4step.safetensors",
+            "installation_path": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/models/sdxl-turbo/",
+            "installation_name": "sdxl_lightning_4step.safetensors"
+        },
+        {
+            "id": 5,
+            "name": "flash_sdxl",
+            "model_name": "SDXL lightning 1step x0",
+            "hugging_face_url": "https://huggingface.co/ByteDance/SDXL-Lightning/tree/main/sdxl_lightning_1step_x0.safetensors",
+            "download_name": "sdxl_lightning_1step_x0.safetensors",
+            "installation_path": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/models/sdxl-flash/",
+            "installation_name": "sdxl_lightning_1step_x0.safetensors"
         }
     ]
 }

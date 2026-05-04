@@ -165,7 +165,7 @@ class automaytexGUI(QMainWindow):
         # --------------------------------------
         layout.addWidget(QLabel("Model Type"))
         self.model_combo = QComboBox()
-        self.model_combo.addItems(["SDXL", "SD1.5", "FLUX"])
+        self.model_combo.addItems(["sdxl", "fast_sdxl", "flash_sdxl"])
         layout.addWidget(self.model_combo)
 
         # --------------------------------------
