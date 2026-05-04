@@ -1,6 +1,6 @@
 import sys, os, gc, math, argparse
 import numpy as np
-import torch
+import torch  # type: ignore
 from PIL import Image
 
 # ── Allow a local venv to shadow system packages ──────────────────────────────
@@ -8,14 +8,14 @@ _VENV = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Lib\site-packages"
 if os.path.isdir(_VENV):
     sys.path.insert(0, _VENV)
 
-from transformers import (
+from transformers import (  # type: ignore
     CLIPTokenizer,
     CLIPTextModel,
     CLIPTextModelWithProjection,
     DepthAnythingForDepthEstimation,
     AutoImageProcessor,
 )
-from diffusers import (
+from diffusers import (  # type: ignore
     ControlNetModel,
     StableDiffusionXLControlNetPipeline,
     AutoencoderKL,
@@ -27,10 +27,7 @@ from diffusers import (
 # Model paths  –  edit these to match your local layout
 # ─────────────────────────────────────────────────────────────────────────────
 DEFAULT_PATHS = dict(
-    # Raw .safetensors SDXL checkpoint  (ComfyUI checkpoints folder)
     base_model  = r"E:\Program Files\ComfyUI\ComfyUI\models\checkpoints\juggernautXL_v9Rdphoto2Lightning.safetensors",
-
-    # Raw .safetensors ControlNet  (promaxx depth variant)
     controlnet  = r"E:\Program Files\ComfyUI\ComfyUI\models\controlnet\diffusion_pytorch_model_promaxx.safetensors",
 
     depth_model = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\models\depth_anything_vitl14",

@@ -1,78 +1,42 @@
-"""
-exr_collage.py
-==============
-Utility to generate PNG collages from 6 EXR cube-face images
-(back, bottom, front, left, right, top).
-
-Three collages are produced per run:
-  1. RGBA channel      → <SAVE_PATH>/collage_rgba.png
-  2. Depth channel     → <SAVE_PATH>/collage_depth.png   (with saturation mapping)
-  3. N (normal) channel→ <SAVE_PATH>/collage_normals.png
-
-Layout – 3 columns × 2 rows, faces in the order supplied:
-  [0] [1] [2]
-  [3] [4] [5]
-
-If the source images are 1024 × 1024, the output canvas is 3072 × 2048.
-
-Dependencies
-------------
-  pip install OpenEXR Imath Pillow numpy
-
-Usage (CLI)
------------
-  python exr_collage.py back.exr bottom.exr front.exr left.exr right.exr top.exr
-  python exr_collage.py back.exr bottom.exr front.exr left.exr right.exr top.exr \
-      --save-path ./out --resize-to 512 --depth-saturation 0.75
-"""
 
 from __future__ import annotations
+
+## IMPORT LIBS
 
 import os
 import sys
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
-
 import numpy as np
 import OpenEXR
 import Imath
 from PIL import Image as PILImage
 
-# ---------------------------------------------------------------------------
-# ── Global configuration ────────────────────────────────────────────────────
-# ---------------------------------------------------------------------------
 
-SAVE_PATH: str          = "./output"   # Directory where collages are saved
-DEPTH_SATURATION: float = 0.82         # Saturation for depth colour ramp (0–1)
-RESIZE_TO: Optional[int] = None        # Resize each face to N×N before tiling
-                                       # (None = keep original size)
-
-# ---------------------------------------------------------------------------
-# ── Internal EXR helpers ────────────────────────────────────────────────────
-# ---------------------------------------------------------------------------
-
+DEPTH_SATURATION: float = 0.82        
+RESIZE_TO: Optional[int] = None
 _FLOAT = Imath.PixelType(Imath.PixelType.FLOAT)
 
 
-def _open_exr(path: str) -> OpenEXR.InputFile:
+###########################################
+## EXR UTILS 
+###########################################
+
+def _open_exr(path: str):
     if not os.path.isfile(path):
         raise FileNotFoundError(f"EXR file not found: {path}")
     return OpenEXR.InputFile(path)
 
-
-def _exr_size(exr: OpenEXR.InputFile) -> Tuple[int, int]:
+def _exr_size(exr: OpenEXR.InputFile):
     dw     = exr.header()["dataWindow"]
     width  = dw.max.x - dw.min.x + 1
     height = dw.max.y - dw.min.y + 1
     return width, height
 
-
-def _available_channels(exr: OpenEXR.InputFile) -> List[str]:
+def _available_channels(exr: OpenEXR.InputFile):
     return list(exr.header()["channels"].keys())
 
-
-def _find_channel(channels: List[str], candidates: List[str]) -> Optional[str]:
-    """Return the first candidate present in channels (case-insensitive)."""
+def _find_channel(channels: List[str], candidates: List[str]):
     lower_map = {c.lower(): c for c in channels}
     for cand in candidates:
         found = lower_map.get(cand.lower())
@@ -80,11 +44,7 @@ def _find_channel(channels: List[str], candidates: List[str]) -> Optional[str]:
             return found
     return None
 
-
-def _read_channel(exr: OpenEXR.InputFile,
-                  name: str,
-                  width: int,
-                  height: int) -> np.ndarray:
+def _read_channel(exr: OpenEXR.InputFile, name: str, width: int, height: int):
     raw = exr.channel(name, _FLOAT)
     return np.frombuffer(raw, dtype=np.float32).reshape(height, width)
 
@@ -121,35 +81,7 @@ def extract_rgba(exr: OpenEXR.InputFile) -> np.ndarray:
     return (rgba * 255).astype(np.uint8)
 
 
-def extract_depth(exr: OpenEXR.InputFile,
-                  saturation: float = DEPTH_SATURATION) -> np.ndarray:
-    """
-    Return an (H, W, 3) uint8 RGB array from the depth channel.
-
-    Robust handling
-    ---------------
-    Many renderers store a large sentinel value (e.g. 1e5, 1e9) in the Z
-    channel for background / sky pixels that were never hit by a ray.
-    A naïve min/max normalisation then crushes the entire foreground into
-    near-black because the sentinel dominates the range.
-
-    This function:
-      1. Detects background pixels via a gap heuristic – any pixel whose
-         Z value is > ``DEPTH_SENTINEL_THRESHOLD`` times the 95th-percentile
-         of the full image is treated as background.
-      2. Normalises only the foreground pixels, clipping between the 1st
-         and 99th percentile to discard outliers.
-      3. Inverts the result so that near geometry = bright, far = dark.
-      4. Sets background pixels to 0 (black) in the output.
-      5. Maps normalised depth through an HSV colour ramp (blue→red) with
-         the given saturation.  Set saturation=0 to get a plain greyscale map.
-
-    Parameters
-    ----------
-    exr : OpenEXR.InputFile
-    saturation : float
-        HSV saturation applied to the colour ramp (0 = greyscale, 1 = vivid).
-    """
+def extract_depth(exr: OpenEXR.InputFile, saturation: float = DEPTH_SATURATION) -> np.ndarray:
     w, h  = _exr_size(exr)
     avail = _available_channels(exr)
 
@@ -260,25 +192,25 @@ def extract_normals(exr: OpenEXR.InputFile) -> np.ndarray:
 
 def build_collage(images: List[np.ndarray]) -> np.ndarray:
     """
-    Tile 6 images into a 3-column × 2-row grid.
+    Tile 4 images into a 2-column × 2-row grid.
 
     All images must share the same (H, W).  The number of colour
     channels (C) is taken from the first image.
 
     Returns
     -------
-    np.ndarray of shape (H*2, W*3, C) uint8.
+    np.ndarray of shape (H*2, W*2, C) uint8.
     """
-    if len(images) != 6:
-        raise ValueError(f"Expected exactly 6 images, got {len(images)}")
+    if len(images) != 4:
+        raise ValueError(f"Expected exactly 4 images, got {len(images)}")
 
     h, w = images[0].shape[:2]
     c    = images[0].shape[2] if images[0].ndim == 3 else 1
 
-    canvas = np.zeros((h * 2, w * 3, c), dtype=np.uint8)
+    canvas = np.zeros((h * 2, w * 2, c), dtype=np.uint8)
     for idx, img in enumerate(images):
-        row = idx // 3
-        col = idx %  3
+        row = idx // 2
+        col = idx %  2
         if img.ndim == 2:
             img = img[:, :, np.newaxis]
         canvas[row * h:(row + 1) * h, col * w:(col + 1) * w] = img
@@ -304,43 +236,22 @@ def save_png(canvas: np.ndarray, path: str) -> None:
     print(f"  Saved → {path}")
 
 
-# ---------------------------------------------------------------------------
 # ── Main class ──────────────────────────────────────────────────────────────
-# ---------------------------------------------------------------------------
 
 class EXRCollageGenerator:
-    """
-    Generate three PNG collages (RGBA / Depth / Normals) from 6 EXR face images.
-
-    Parameters
-    ----------
-    image_paths : list[str]
-        Exactly 6 paths in the order: back, bottom, front, left, right, top.
-    save_path : str
-        Output directory (created if absent).
-        Default: module-level ``SAVE_PATH``.
-    depth_saturation : float
-        Saturation for the depth colour ramp (0 = greyscale, 1 = full colour).
-        Default: module-level ``DEPTH_SATURATION``.
-    resize_to : int | None
-        When set, each face is resized to ``resize_to × resize_to`` pixels
-        before compositing.
-        Default: module-level ``RESIZE_TO`` (None → keep original size).
-    """
-
-    FACE_ORDER = ["back", "bottom", "front", "left", "right", "top"]
+    FACE_ORDER = ["face_0", "face_1", "face_2", "face_3"]
 
     def __init__(
         self,
         image_paths:      List[str],
-        save_path:        str            = SAVE_PATH,
-        depth_saturation: float          = DEPTH_SATURATION,
-        resize_to:        Optional[int]  = RESIZE_TO,
+        save_path:        str,
+        depth_saturation: float,
+        resize_to:        Optional[int]  = None,
     ) -> None:
-        if len(image_paths) != 6:
+        if len(image_paths) != 4:
             raise ValueError(
-                f"Exactly 6 image paths required "
-                f"(back / bottom / front / left / right / top); "
+                f"Exactly 4 image paths required "
+                f"(face_0 / face_1 / face_2 / face_3); "
                 f"received {len(image_paths)}."
             )
         self.image_paths      = image_paths
@@ -349,10 +260,7 @@ class EXRCollageGenerator:
         self.resize_to        = resize_to
 
     # ------------------------------------------------------------------
-    def _extract_all(self,
-                     extractor: Callable[[OpenEXR.InputFile], np.ndarray],
-                     label: str) -> List[np.ndarray]:
-        """Open all 6 EXR files and apply *extractor* to each."""
+    def _extract_all(self, extractor: Callable[[OpenEXR.InputFile], np.ndarray], label: str) -> List[np.ndarray]:
         results: List[np.ndarray] = []
         for i, path in enumerate(self.image_paths):
             face = self.FACE_ORDER[i]
@@ -371,7 +279,7 @@ class EXRCollageGenerator:
 
     # ------------------------------------------------------------------
     def generate_rgba_collage(self) -> str:
-        """Extract RGBA, build 3×2 collage, save PNG.  Returns output path."""
+        """Extract RGBA, build 2×2 collage, save PNG.  Returns output path."""
         print("[RGBA] Extracting …")
         images   = self._extract_all(extract_rgba, "RGBA")
         canvas   = build_collage(images)
@@ -381,7 +289,7 @@ class EXRCollageGenerator:
 
     # ------------------------------------------------------------------
     def generate_depth_collage(self) -> str:
-        """Extract depth, build 3×2 collage, save PNG.  Returns output path."""
+        """Extract depth, build 2×2 collage, save PNG.  Returns output path."""
         print(f"[Depth] Extracting (saturation={self.depth_saturation}) …")
 
         def _extractor(exr: OpenEXR.InputFile) -> np.ndarray:
@@ -395,7 +303,7 @@ class EXRCollageGenerator:
 
     # ------------------------------------------------------------------
     def generate_normals_collage(self) -> str:
-        """Extract normals, build 3×2 collage, save PNG.  Returns output path."""
+        """Extract normals, build 2×2 collage, save PNG.  Returns output path."""
         print("[N] Extracting normal channels …")
         images   = self._extract_all(extract_normals, "N")
         canvas   = build_collage(images)
@@ -405,10 +313,6 @@ class EXRCollageGenerator:
 
     # ------------------------------------------------------------------
     def run(self) -> dict:
-        """
-        Run all three collage extractions and return a dict with the
-        output file paths keyed by ``'rgba'``, ``'depth'``, ``'normals'``.
-        """
         print("=" * 62)
         print("  EXR Collage Generator")
         print(f"  Face order   : {', '.join(self.FACE_ORDER)}")
@@ -426,7 +330,7 @@ class EXRCollageGenerator:
 
 if __name__ == "__main__":
     images_searchPath = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\temp"
-    FACE_ORDER = ["front", "left", "top", "back", "right", "bottom"]
+    FACE_ORDER = ["face_0", "face_1", "face_2", "face_3"]
     images = [os.path.join(images_searchPath, f"{face}.exr") for face in FACE_ORDER]
     
     gen = EXRCollageGenerator(

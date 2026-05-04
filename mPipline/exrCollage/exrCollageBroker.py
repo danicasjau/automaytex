@@ -1,51 +1,3 @@
-"""
-collage_splitter.py
-===================
-Reverse of exr_collage.py.
-
-Given a 3×2 PNG collage (3 columns, 2 rows), this utility:
-  1. Cuts each of the 6 faces out pixel-accurately from the collage grid.
-  2. Optionally resizes each face to OUTPUT_SIZE × OUTPUT_SIZE.
-  3. Saves each face as  ``{material_name}.{UDIM}.png`` inside a
-     per-material sub-folder created under OUTPUT_ROOT.
-
-UDIM pipeline
--------------
-UDIM tiles start at 1001 and increment left-to-right, top-to-bottom,
-matching the standard Mari / Substance / Houdini convention:
-
-  Grid position   UDIM
-  ─────────────   ────
-  row 0, col 0 → 1001   (face[0])
-  row 0, col 1 → 1002   (face[1])
-  row 0, col 2 → 1003   (face[2])
-  row 1, col 0 → 1004   (face[3])
-  row 1, col 1 → 1005   (face[4])
-  row 1, col 2 → 1006   (face[5])
-
-FACE_ORDER maps UDIM slot → face name.
-
-Usage
------
-As a module::
-
-    from collage_splitter import CollageSplitter
-    s = CollageSplitter(
-        collage_path  = "./output/collage_rgba.png",
-        material_name = "robot_rgba",
-    )
-    s.run()
-
-CLI::
-
-    python collage_splitter.py ./output/collage_rgba.png robot_rgba
-    python collage_splitter.py ./output/collage_depth.png robot_depth \\
-        --output-root ./textures --output-size 512
-
-Dependencies
-------------
-    pip install Pillow
-"""
 
 from __future__ import annotations
 
@@ -53,6 +5,8 @@ import os
 import sys
 from pathlib import Path
 from typing import List, Optional, Tuple
+
+
 
 from PIL import Image as PILImage
 
@@ -62,7 +16,7 @@ from PIL import Image as PILImage
 
 # Order of faces in the collage grid (left-to-right, top-to-bottom).
 # Edit this list to match the order used when the collage was generated.
-FACE_ORDER: List[str] = ["front", "left", "top", "back", "right", "bottom"]
+FACE_ORDER: List[str] = ["face_0", "face_1", "face_2", "face_3"]
 
 # Root directory under which per-material sub-folders are created.
 OUTPUT_ROOT: str = "./output"
@@ -82,19 +36,7 @@ RESAMPLE_FILTER = PILImage.LANCZOS
 # ── Core helpers ────────────────────────────────────────────────────────────
 # ---------------------------------------------------------------------------
 
-def _tile_size(collage: PILImage.Image, cols: int = 3, rows: int = 2) -> Tuple[int, int]:
-    """
-    Compute the pixel-accurate size of each tile in the collage.
-
-    The collage must be exactly ``cols × tile_w`` wide and
-    ``rows × tile_h`` tall.  An error is raised if the dimensions do not
-    divide evenly — this would indicate the image was saved with padding
-    or that the wrong collage was provided.
-
-    Returns
-    -------
-    (tile_w, tile_h)
-    """
+def _tile_size(collage: PILImage.Image, cols: int = 2, rows: int = 2) -> Tuple[int, int]:
     cw, ch = collage.size
     if cw % cols != 0:
         raise ValueError(
@@ -107,18 +49,7 @@ def _tile_size(collage: PILImage.Image, cols: int = 3, rows: int = 2) -> Tuple[i
     return cw // cols, ch // rows
 
 
-def _crop_tile(collage: PILImage.Image,
-               tile_w: int, tile_h: int,
-               row: int, col: int) -> PILImage.Image:
-    """
-    Return a pixel-accurate crop of one tile from the collage.
-
-    Parameters
-    ----------
-    collage : PIL image
-    tile_w, tile_h : tile dimensions in pixels
-    row, col : zero-based grid position
-    """
+def _crop_tile(collage: PILImage.Image, tile_w: int, tile_h: int, row: int, col: int) -> PILImage.Image:
     left   = col * tile_w
     upper  = row * tile_h
     right  = left + tile_w
@@ -136,33 +67,6 @@ def _udim(index: int, start: int = UDIM_START) -> int:
 # ---------------------------------------------------------------------------
 
 class CollageSplitter:
-    """
-    Split a 3×2 PNG collage back into individual face images with UDIM names.
-
-    Parameters
-    ----------
-    collage_path : str
-        Path to the source collage PNG.
-    material_name : str
-        Base name used for the output files and the sub-folder.
-        Output files will be named ``{material_name}.{UDIM}.png``.
-    output_root : str
-        Root directory.  A sub-folder named ``{material_name}`` is created
-        inside it.  Defaults to the module-level ``OUTPUT_ROOT``.
-    output_size : int | None
-        If given, each tile is resized to ``output_size × output_size``
-        **after** the pixel-accurate crop.  Defaults to ``OUTPUT_SIZE``.
-    face_order : list[str]
-        Names of the 6 faces in collage order (left→right, top→bottom).
-        Defaults to the module-level ``FACE_ORDER``.
-    udim_start : int
-        First UDIM index.  Defaults to ``UDIM_START`` (1001).
-    cols : int
-        Number of columns in the collage grid (default 3).
-    rows : int
-        Number of rows in the collage grid (default 2).
-    """
-
     def __init__(
         self,
         collage_path:  str,
@@ -171,9 +75,10 @@ class CollageSplitter:
         output_size:   Optional[int]  = OUTPUT_SIZE,
         face_order:    List[str]      = FACE_ORDER,
         udim_start:    int            = UDIM_START,
-        cols:          int            = 3,
+        cols:          int            = 2,
         rows:          int            = 2,
     ) -> None:
+        
         if not os.path.isfile(collage_path):
             raise FileNotFoundError(f"Collage not found: {collage_path}")
 
@@ -206,17 +111,6 @@ class CollageSplitter:
 
     # ------------------------------------------------------------------
     def split(self) -> List[str]:
-        """
-        Perform the split and return a list of written file paths.
-
-        Steps
-        -----
-        1. Open collage and compute tile dimensions (pixel-accurate).
-        2. For each tile position (row, col):
-           a. Crop the tile exactly.
-           b. Optionally resize.
-           c. Save as ``{material_name}.{UDIM}.png``.
-        """
         self._make_output_folder()
 
         collage = PILImage.open(self.collage_path)
@@ -230,6 +124,7 @@ class CollageSplitter:
 
         written: List[str] = []
 
+
         for idx, face_name in enumerate(self.face_order):
             row  = idx // self.cols
             col  = idx %  self.cols
@@ -240,15 +135,29 @@ class CollageSplitter:
 
             # ── 2. Optional resize (after crop) ─────────────────────
             if self.output_size is not None:
-                tile = tile.resize(
-                    (self.output_size, self.output_size),
-                    RESAMPLE_FILTER,
-                )
+                tile = tile.resize((self.output_size, self.output_size), RESAMPLE_FILTER)
 
             # ── 3. Save ──────────────────────────────────────────────
             filename = f"{self.material_name}.{udim}.png"
             out_path = self.output_folder / filename
             tile.save(str(out_path), format="PNG")
+
+            import subprocess
+            import os
+            try:
+                from config import configuration
+                cfg = configuration()
+                script_path = os.path.join(cfg.base_dir, "upscalerPolishing.py")
+                cmd = [
+                    cfg.python_exe, script_path,
+                    "--input", str(out_path),
+                    "--output", str(self.output_folder),
+                    "--res", "4k"
+                ]
+                print(f"    [Upscaler] Running subprocess...")
+                subprocess.run(cmd, check=True)
+            except Exception as e:
+                print(f"    [ERROR] Upscaler failed: {e}")
 
             size_str = f"{tile.size[0]}×{tile.size[1]}"
             print(f"    [{row},{col}] {face_name:8s}  UDIM {udim}  {size_str:>12}  → {filename}")
@@ -288,24 +197,7 @@ def split_collage_set(
     face_order:    List[str]     = FACE_ORDER,
     udim_start:    int           = UDIM_START,
 ) -> dict:
-    """
-    Convenience function to split multiple collages in one call.
 
-    Parameters
-    ----------
-    collages : dict
-        Mapping of ``material_name → collage_path``.  Example::
-
-            {
-                "robot_rgba"   : "./output/collage_rgba.png",
-                "robot_depth"  : "./output/collage_depth.png",
-                "robot_normals": "./output/collage_normals.png",
-            }
-
-    Returns
-    -------
-    dict mapping material_name → list of written file paths.
-    """
     results = {}
     for material_name, collage_path in collages.items():
         splitter = CollageSplitter(
@@ -330,14 +222,14 @@ def _build_parser():
     p = argparse.ArgumentParser(
         prog="collage_splitter.py",
         description=(
-            "Split a 3×2 PNG collage into 6 individual UDIM-named face images."
+            "Split a 2×2 PNG collage into 4 individual UDIM-named face images."
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     p.add_argument(
         "collage",
         metavar="COLLAGE_PNG",
-        help="Path to the source 3×2 collage PNG.",
+        help="Path to the source 2×2 collage PNG.",
     )
     p.add_argument(
         "material_name",
@@ -365,11 +257,11 @@ def _build_parser():
     )
     p.add_argument(
         "--face-order", "-f",
-        nargs=6,
+        nargs=4,
         default=FACE_ORDER,
         metavar="FACE",
         help=(
-            "Six face names in collage order (left→right, top→bottom).  "
+            "Four face names in collage order (left→right, top→bottom).  "
             f"Default: {' '.join(FACE_ORDER)}"
         ),
     )
@@ -383,7 +275,7 @@ def _build_parser():
     p.add_argument(
         "--cols",
         type=int,
-        default=3,
+        default=2,
         metavar="N",
         help="Number of columns in the collage grid.",
     )
@@ -397,7 +289,7 @@ def _build_parser():
 
 
 if __name__ == "__main__":
-    FACE_ORDER = ["right", "left", "top", "bottom", "front", "back"]
+    FACE_ORDER = ["face_0", "face_1", "face_2", "face_3"]
     splitter = CollageSplitter(
         collage_path  = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\output\collage_normals.png",
         material_name = "robot_normals",
@@ -405,7 +297,7 @@ if __name__ == "__main__":
         output_size   = 2048,
         face_order    = FACE_ORDER,
         udim_start    = UDIM_START,
-        cols          = 3,
+        cols          = 2,
         rows          = 2,
     )
 

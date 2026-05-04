@@ -1,0 +1,6 @@
+{
+    "BASE_DIR": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex",
+    "ENV_PATH": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/mEnv",
+    "SCRIPTS_PATH": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/mPipline",
+    "MODELS_PATH": "E:/Program Files/ComfyUI/ComfyUI/models"
+}

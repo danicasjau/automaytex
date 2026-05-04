@@ -56,13 +56,14 @@ class UVRetargetTool:
         ``retarget_uv_set_name``.
     """
 
-    def __init__(self, mesh, output_dir=None, config=None):
+    def __init__(self, mesh, config=None):
         if config is None:
             from config import configuration          # type: ignore[import]
             config = configuration()
+    
         self.config = config
         self.mesh   = mesh
-        self.output_dir = output_dir or self.config.output_path
+        self.output_dir = self.config.output_path
 
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -157,6 +158,194 @@ class UVRetargetTool:
         return "map1" if "map1" in uv_sets else uv_sets[0]
 
     # ------------------------------------------------------------------
+    # PUBLIC – CREATE TETRAHEDRAL PLANAR UV
+    # ------------------------------------------------------------------
+
+    def createPlanarUV(self, method):
+        if method == "cube":
+            self.createCubePlanarUV()
+        else:
+            self.createTetrahedralPlanarUV()
+
+    def createTetrahedralPlanarUV(self) -> None:
+        """
+        Creates the 'planarUV' set by projecting the mesh faces onto the 4 planes
+        of a regular tetrahedron, matching the extraction cameras.
+        This must be called before retargetToOriginalUV() if planarUV does not exist.
+        """
+        if not MAYA_AVAILABLE:
+            raise RuntimeError("Maya is not available.")
+        
+        sel = om.MSelectionList()
+        sel.add(self.mesh)
+        dag = sel.getDagPath(0)
+        
+        # Bounding box
+        bb_min = [math.inf]*3
+        bb_max = [-math.inf]*3
+        bb = cmds.exactWorldBoundingBox(self.mesh)
+        for i in range(3):
+            bb_min[i] = bb[i]
+            bb_max[i] = bb[i+3]
+            
+        cx = (bb_min[0] + bb_max[0]) * 0.5
+        cy = (bb_min[1] + bb_max[1]) * 0.5
+        cz = (bb_min[2] + bb_max[2]) * 0.5
+        
+        dx = bb_max[0] - bb_min[0]
+        dy = bb_max[1] - bb_min[1]
+        dz = bb_max[2] - bb_min[2]
+        bb_radius = 0.5 * math.sqrt(dx*dx + dy*dy + dz*dz)
+        if bb_radius == 0.0: bb_radius = 1.0
+        # Use camera_scale from config to match rendering
+        camera_scale = getattr(self.config, "camera_scale", 1.0)
+        ortho_w = bb_radius * 2.0 * 1.1 * camera_scale
+
+        s2 = math.sqrt(2)
+        s23 = math.sqrt(2.0 / 3.0)
+        tet_normals = {
+            "face_0": ( 0.0,            -1.0,       0.0   ),
+            "face_1": (-2*s2/3,          1.0/3,     0.0   ),
+            "face_2": ( s2/3,            1.0/3,    -s23   ),
+            "face_3": ( s2/3,            1.0/3,     s23   ),
+        }
+
+        # Normalize tet_normals
+        for k in tet_normals:
+            nx, ny, nz = tet_normals[k]
+            l = math.sqrt(nx*nx + ny*ny + nz*nz)
+            tet_normals[k] = (nx/l, ny/l, nz/l)
+
+        # Classify faces
+        try:
+            dag.extendToShape()
+        except:
+            pass
+        it = om.MItMeshPolygon(dag)
+        prefix = dag.fullPathName() + ".f["
+        groups = {k: [] for k in tet_normals}
+
+        while not it.isDone():
+            n = it.getNormal(om.MSpace.kWorld)
+            best_face = None
+            max_dot = -math.inf
+            for k, (nx, ny, nz) in tet_normals.items():
+                dot = n.x * nx + n.y * ny + n.z * nz
+                if dot > max_dot:
+                    max_dot = dot
+                    best_face = k
+            
+            # Avoid degenerate faces
+            length_sq = n.x*n.x + n.y*n.y + n.z*n.z
+            if length_sq > 1e-10 and best_face is not None:
+                groups[best_face].append(prefix + str(it.index()) + "]")
+            it.next()
+
+        if "planarUV" not in cmds.polyUVSet(self.mesh, q=True, allUVSets=True) or []:
+            cmds.polyUVSet(self.mesh, create=True, uvSet="planarUV")
+        cmds.polyUVSet(self.mesh, currentUVSet=True, uvSet="planarUV")
+
+        face_order = ["face_0", "face_1", "face_2", "face_3"]
+        for idx, view_name in enumerate(face_order):
+            faces = groups[view_name]
+            if not faces:
+                continue
+
+            nx, ny, nz = tet_normals[view_name]
+            rx = math.degrees(-math.asin(max(-1.0, min(1.0, ny))))
+            ry = math.degrees(math.atan2(nx, nz))
+            rz = 0.0
+
+            cmds.polyPlanarProjection(
+                faces,
+                rx=rx, ry=ry, rz=rz,
+                pc=(cx, cy, cz),
+                pw=ortho_w, ph=ortho_w,
+                icx=0.5, icy=0.5,
+                md="p",
+                name="planarUV"
+            )
+
+            col = idx % 2
+            row = idx // 2
+            
+            chunk_size = 1000
+            for i in range(0, len(faces), chunk_size):
+                cmds.polyEditUV(faces[i:i+chunk_size], uValue=col, vValue=row)
+
+        print("[INFO] Created planarUV set for 4 tetrahedral planes.")
+
+
+    def createCubePlanarUV(self, selection=None):
+        sel = selection if selection is not None else cmds.ls(sl=True, long=True)
+        transforms = cmds.ls(sel, type="transform", long=True)
+        
+        # Try finding shapes if no transforms explicitly selected
+        if not transforms:
+            shapes = cmds.ls(sel, dag=True, shapes=True, long=True)
+            if shapes:
+                transforms = list({cmds.listRelatives(s, parent=True, fullPath=True)[0] for s in shapes})
+                
+        if not transforms:
+            cmds.warning("[GeoPlanarUV] No geometry provided. Please select at least one mesh.")
+            return
+            
+        bb_min, bb_max = self.get_bounding_box(transforms)
+        cx = (bb_min[0] + bb_max[0]) * 0.5
+        cy = (bb_min[1] + bb_max[1]) * 0.5
+        cz = (bb_min[2] + bb_max[2]) * 0.5
+        
+        dx = bb_max[0] - bb_min[0]
+        dy = bb_max[1] - bb_min[1]
+        dz = bb_max[2] - bb_min[2]
+        
+        padding = 0.08
+        
+        # Apply planar projections per transform
+        for tfm in transforms:
+            groups = self.classify_faces(tfm)
+            
+            for view_name, faces in groups.items():
+                if not faces:
+                    continue
+                    
+                # Mirroring GeometryPlanarExtractor bounding calculations identically
+                if view_name in ("front", "back"):
+                    horiz, vert = dx, dy
+                elif view_name in ("left", "right"):
+                    horiz, vert = dz, dy
+                else:
+                    horiz, vert = dx, dz
+                
+                ortho_w = max(horiz, vert) * (1.0 + padding)
+                rx, ry, rz = self.VIEW_ROTATIONS[view_name]
+                
+                # Perform the planar projection explicitly creating 0..1 UV layout
+                cmds.polyPlanarProjection(faces, 
+                                          rx=rx, ry=ry, rz=rz, 
+                                          pc=[cx, cy, cz], 
+                                          pw=ortho_w, ph=ortho_w,
+                                          icx=0.5, icy=0.5,
+                                          md="p")
+                                          
+                # Map to sequential UDIM tiles matching exrCollageBroker
+                # 1001, 1002, 1003, 1004, 1005, 1006
+                idx = self.LAYOUT_ORDER.index(view_name)
+                
+                # A standard UDIM index is 1001 + u + 10*v.
+                # Here, idx ranges from 0 to 5, so v=0, u=idx.
+                u_shift = float(idx)
+                v_shift = 0.0
+                
+                # Shift UVs from [0, 1] base scale into the correct UDIM U offset
+                cmds.polyEditUV(faces, uValue=u_shift, vValue=v_shift)
+                
+                print(f"  [view] mapped '{view_name}' to UDIM {1001 + idx}")
+                
+        print("\n=== GeoPlanarUVProjection DONE ===")
+        print(f"Applied 6-planar UV layout routing to UDIMs 1001-1006 for {self.LAYOUT_ORDER}.")
+
+    # ------------------------------------------------------------------
     # PUBLIC – MAIN RETARGET
     # ------------------------------------------------------------------
 
@@ -209,8 +398,10 @@ class UVRetargetTool:
         dst_uv_set = self._get_target_uv_set(fn)
         
         if src_uv_set not in fn.getUVSetNames():
-            print(f"[WARNING] Mesh '{self.mesh}' is missing '{src_uv_set}'.")
-            return
+            print(f"[INFO] Mesh '{self.mesh}' is missing '{src_uv_set}'. Creating tetrahedral projection...")
+            # self.createTetrahedralPlanarUV()
+            # Refresh MFnMesh to recognize the new UV set
+            fn = om.MFnMesh(dag)
 
         # ── 2. Load source UDIM tiles ──────────────────────────────────
         src_images: dict[int, Image.Image] = {}
@@ -296,6 +487,8 @@ class UVRetargetTool:
     # ==================================================================
     # PRIVATE HELPERS
     # ==================================================================
+
+    
 
     # ------------------------------------------------------------------
     # Rasterise one triangle

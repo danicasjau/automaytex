@@ -1,9 +1,9 @@
 
+/_output
 /output
-/output2
-/texturesOutputMain
 /temp
 /_deleted
 /models
 */__pycache__
 *.pyc
+/testoutput

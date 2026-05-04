@@ -3,7 +3,6 @@ import maya.cmds as cmds
 import os
 
 class mUtils:
-    
     def __init__(self):
         pass
 

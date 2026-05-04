@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 class mapsMaterialGenerator():
-    def __init__(self, diffuseImagePath, normalImagePath, outputPath=None):
+    def __init__(self, imagesToGenerate, diffuseImagePath, normalImagePath, outputPath=None):
         self.initial_normalCollageImagePath = normalImagePath
 
         self.diffuseImagePath = diffuseImagePath
@@ -12,6 +12,8 @@ class mapsMaterialGenerator():
 
         self.prompt = "detailed material texture, highly detailed, 8k"
         self.tex_generator = None
+
+        self.imagesToGenerate = imagesToGenerate
     
     def create(self):
         if not self.output_path:
@@ -22,23 +24,41 @@ class mapsMaterialGenerator():
 
         print("[Info] Starting material maps creation...")
 
-        diffuse_path = self.create_diffuseMap(self.diffuseImagePath)
-        roughness_path = self.create_roughnessMap(diffuse_path)
-        metalness_path = self.create_metalnessMap(diffuse_path)
-        height_path = self.create_heightMap(diffuse_path)
-        normal_path = self.create_normalMap(height_path)
+        if "diffuse" in self.imagesToGenerate:
+            self.diffuseImagePath = self.create_diffuseMap(self.diffuseImagePath)
+        else:
+            self.diffuseImagePath = None
+        
+        if "roughness" in self.imagesToGenerate:
+            self.roughnessImagePath = self.create_roughnessMap(self.diffuseImagePath)
+        else:
+            self.roughnessImagePath = None
+
+        if "metalness" in self.imagesToGenerate:
+            self.metalnessImagePath = self.create_metalnessMap(self.diffuseImagePath)
+        else:
+            self.metalnessImagePath = None
+
+        if "height" in self.imagesToGenerate:
+            self.heightImagePath = self.create_heightMap(self.diffuseImagePath)
+        else:
+            self.heightImagePath = None
+
+        if "normal" in self.imagesToGenerate:
+            self.normalImagePath = self.create_normalMap(self.heightImagePath)
+        else:
+            self.normalImagePath = None
         
         print("[Info] Material maps created successfully in:", self.output_path)
 
-        diffuse_path = cv2.imread(diffuse_path)
-        cv2.imwrite(os.path.join(self.output_path, "diffuse_2.png"), diffuse_path)
+
 
         return {
-            "diffuse": diffuse_path,
-            "roughness": roughness_path,
-            "metalness": metalness_path,
-            "height": height_path,
-            "normal": normal_path
+            "diffuse": self.diffuseImagePath,
+            "roughness": self.roughnessImagePath,
+            "metalness": self.metalnessImagePath,
+            "height": self.heightImagePath,
+            "normal": self.normalImagePath
         }
     
     def create_diffuseMap(self, image_path):
@@ -56,6 +76,8 @@ class mapsMaterialGenerator():
             )
             return out_file
         else:
+            diffuse_path = cv2.imread(image_path)
+            cv2.imwrite(os.path.join(self.output_path, "diffuse.png"), diffuse_path)
             self.diffuseImagePath = image_path
             return image_path
 
@@ -77,7 +99,6 @@ class mapsMaterialGenerator():
         self.roughnessImagePath = out_file
 
         return out_file
-
 
     def create_metalnessMap(self, image_path):
         out_file = os.path.join(self.output_path, "metalness.png")
@@ -255,10 +276,3 @@ class PBRMapGenerator:
         
         return height, final_normals
 
-
-if __name__ == "__main__":
-    image_path = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\output\main.png"
-    nomralPath = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\output\depth_retarget_1001.png"
-
-    material = mapsMaterialGenerator(image_path, nomralPath)
-    material.create()

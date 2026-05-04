@@ -8,14 +8,12 @@ import math
 # ---------------------------------------------------------------------------
 
 class GeoPlanarUVProjection:
-
-    def __init__(self, config=None):
-        if config is None:
-            from config import configuration
-            config = configuration()
+    def __init__(self, output_dir=None, config=None):
         self.config = config
+        self.output_dir = output_dir
 
     # ------------------------------------------------------------------ utils
+
 
     @staticmethod
     def _world_bbox(transforms):
@@ -91,7 +89,7 @@ class GeoPlanarUVProjection:
 
         groups = self._classify_faces(dag)
 
-        for view_name in self.config.face_order:
+        for view_name in self.config.face_order_6:
             faces = groups[view_name]
             if not faces:
                 continue
@@ -123,12 +121,15 @@ class GeoPlanarUVProjection:
                 name="planarUV" # Explicitly force the command to write here
             )
 
-            # UDIM shift (3x2 grid: 1001-1003, 1011-1013)
-            idx     = self.config.face_order.index(view_name)
-            col     = idx % 3
-            row     = idx // 3
-            u_shift = float(col)
-            v_shift = float(row)
+            # UDIM shift (3x2 grid for 6 faces, 2x2 grid for 4 faces)
+            idx      = self.config.face_order_6.index(view_name)
+            num_faces = len(self.config.face_order_6)
+            cols      = 3 if num_faces == 6 else 2
+            
+            col      = idx % cols
+            row      = idx // cols
+            u_shift  = float(col)
+            v_shift  = float(row)
 
             # Chunked polyEditUV – avoids stack overflow on high poly meshes
             for batch in self._chunk(faces, self.config.uv_chunk_size):
@@ -179,7 +180,7 @@ class GeoPlanarUVProjection:
 
         om.MGlobal.displayInfo(
             "=== GeoPlanarUVProjection DONE === "
-            f"UDIMs 1001-1006  |  order: {self.config.face_order}"
+            f"UDIMs 1001-1006  |  order: {self.config.face_order_6}"
         )
 
 

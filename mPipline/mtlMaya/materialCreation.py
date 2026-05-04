@@ -1,6 +1,6 @@
 import maya.cmds as cmds
+import maya.mel as mel
 import os
-
 
 class autoMaMaterial:
     def __init__(self, config=None):
@@ -52,6 +52,7 @@ class autoMaMaterial:
         if udim:
             # Set UDIM tiling mode (Mari convention = 3)
             cmds.setAttr(file_node + ".uvTilingMode", 3)
+            mel.eval('generateAllUvTilePreviews;')
 
         if slot == "normal":
             bump_node = cmds.shadingNode("bump2d", asUtility=True)

@@ -10,17 +10,17 @@ For CUDA support, install PyTorch with CUDA:
 
 import sys
 
-sys.path.append(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Lib\site-packages")
+# sys.path.append(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Lib\site-packages")
 
+import torch
 import os
 import math
 import time
 from pathlib import Path
 from typing import Optional
 
-import torch
-import torch.nn as nn
-import torch.optim as optim
+from typing import Any
+
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
@@ -48,32 +48,6 @@ RESOLUTION_PRESETS: dict[str, tuple[int, int]] = {
 
 
 class ESRGANUpscaler:
-    """
-    End-to-end ESRGAN upscaling pipeline with optional model fine-tuning.
-
-    Parameters
-    ----------
-    input_images : list[str]
-        Paths to input .png images.
-    output_folder : str
-        Destination folder for upscaled images.
-    target_resolution : str | tuple[int, int]
-        Named preset ('4k', '2k', '1080p', …) or explicit (width, height).
-    model_name : str
-        Pretrained model variant. Options:
-            - 'RealESRGAN_x4plus'        (general photos, x4)
-            - 'RealESRGAN_x4plus_anime_6B' (anime/illustrations, x4)
-            - 'RealESRGAN_x2plus'        (general photos, x2)
-    device : str | None
-        'cuda', 'cpu', or None for auto-detect.
-    tile : int
-        Tile size for VRAM-friendly inference (0 = no tiling).
-    tile_pad : int
-        Tile overlap padding in pixels.
-    half_precision : bool
-        Use float16 for faster GPU inference (slightly lower quality).
-    """
-
     # Model registry: name -> (arch, scale, num_block, url)
     _MODEL_REGISTRY = {
         "RealESRGAN_x4plus": {
@@ -209,31 +183,7 @@ class ESRGANUpscaler:
         save_refined_path: Optional[str] = None,
         loss_fn: str = "l1",
     ) -> None:
-        """
-        Fine-tune / refine the loaded ESRGAN model on custom LR→HR pairs.
 
-        This applies pixel-wise supervised fine-tuning — useful for domain
-        adaptation (e.g., medical, satellite, microscopy imagery) without
-        training from scratch.
-
-        Parameters
-        ----------
-        lr_images : list[str]
-            Low-resolution input image paths.
-        hr_images : list[str]
-            Corresponding high-resolution ground-truth paths.
-        epochs : int
-            Number of fine-tuning epochs.
-        learning_rate : float
-            Adam optimizer learning rate.
-        batch_size : int
-            Images per gradient step (keep low for VRAM safety).
-        save_refined_path : str | None
-            Where to save the refined model weights (.pth). If None,
-            saves as '<model_name>_refined.pth' next to the base model.
-        loss_fn : str
-            'l1' (MAE) or 'l2' (MSE).
-        """
         if self._nn_model is None:
             self.load_model()
 
@@ -415,6 +365,20 @@ class ESRGANUpscaler:
         print("=" * 52)
 
 
+def fastUpscaler(input_image_path = None, output_path = None):
+    if input_image_path:
+        upscaler = ESRGANUpscaler(
+            input_images=[input_image_path],
+            output_folder=output_path,
+            target_resolution=(4096, 4096)
+        )
+        upscaler.load_model()
+        results = upscaler.upscale_all()
+        if results:
+            return str(results[0])
+    return None
+
+    
 # ---------------------------------------------------------------------------
 # Quick-start usage example
 # ---------------------------------------------------------------------------
