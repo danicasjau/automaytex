@@ -2,8 +2,6 @@
 import maya.cmds as cmds
 import os
 
-
-
 class mUtils:
     def __init__(self):
         pass
@@ -18,4 +16,3 @@ class mUtils:
             zip_ref.extractall(output_dir)
         print(f"Extracted {fbx_path} to {output_dir}")
         return True
-

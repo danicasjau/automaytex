@@ -61,14 +61,17 @@ _general_configuration = conf.configuration()
 
 import mPipline.geoExtraction.geometryRenderer
 
+import mPipline.geoExtractionSix.geoPlanarRenderer
+
 import mPipline.exrCollage.exrCollageGenerator
 import mPipline.exrCollage.exrCollageBroker
 
 import mPipline.mtlMaya.materialCreation
+
 import mPipline.uvUtils.reUvPorjection
+
 import mPipline.mtlMaya.mtlMaterialMapsCreation
 import mGui
-import cModels
 
 ################################################
 ## RELOADING PIPELINES FOR DEVELOPING
@@ -78,15 +81,16 @@ def maya_remiport_libs():
     importlib.reload(conf)
     
     importlib.reload(mPipline.geoExtraction.geometryRenderer)
+    importlib.reload(mPipline.geoExtractionSix.geoPlanarRenderer)
 
     importlib.reload(mPipline.exrCollage.exrCollageGenerator)
     importlib.reload(mPipline.exrCollage.exrCollageBroker)
     
     importlib.reload(mPipline.mtlMaya.materialCreation)
     importlib.reload(mPipline.uvUtils.reUvPorjection)
+    
     importlib.reload(mPipline.mtlMaya.mtlMaterialMapsCreation)
     importlib.reload(mGui)
-    importlib.reload(cModels)
 
 maya_remiport_libs()
 
@@ -95,16 +99,18 @@ maya_remiport_libs()
 ################################################
 
 from mPipline.geoExtraction.geometryRenderer import MeshRenderer
+from mPipline.geoExtractionSix.geoPlanarRenderer import SixMeshRenderer
 
 from mPipline.exrCollage.exrCollageGenerator import EXRCollageGenerator
 from mPipline.exrCollage.exrCollageBroker import CollageSplitter
 
 from mPipline.mtlMaya.materialCreation import autoMaMaterial
+
 from mPipline.uvUtils.reUvPorjection import UVRetargetTool
+
 from mPipline.mtlMaya.mtlMaterialMapsCreation import mapsMaterialGenerator
 
 import mGui as mayagui
-import cModels
 
 
 ################################################
@@ -140,9 +146,16 @@ class autoTexturePipeline:
         ## INITIALIZING PIPELINE OBJECTS
         ################################
 
-        self.extractor = MeshRenderer(
-            config=self.config
-        )
+        if self.config.renderMode == "thetredral":
+            self.extractor = MeshRenderer(
+                config=self.config
+            )
+
+        elif self.config.renderMode == "cube":
+            self.extractor = SixMeshRenderer(
+                config=self.config
+            )
+
 
         self.retarget_tool = UVRetargetTool(
             self.selection[0], 
@@ -173,17 +186,35 @@ class autoTexturePipeline:
     def retarget_collage(self, collage_path, name=None):
         print(f"\n--- 4. Retargeting {name} to Original UVs ---")
 
+
+        if self.config.renderMode == "cube":
+            FACE_ORDER = self.config.face_order_6
+            UDIM_START   = 1001
+            cols = 3
+            rows = 2
+        elif self.config.renderMode == "thetredral":
+            FACE_ORDER = self.config.face_order
+            UDIM_START   = 1001
+            cols = 2
+            rows = 2
+        
         splitter = CollageSplitter(
             collage_path=collage_path,
             material_name=f"{name}_source",
             output_root=self.config.output_path,
-            output_size=self.config.resolution
+            output_size=self.config.resolution,
+            face_order    = FACE_ORDER,
+            udim_start    = UDIM_START,
+            cols          = cols,
+            rows          = rows,
         )
 
         tiles = splitter.run()
 
         self.retarget_tool.setMaterialTextures(tiles)
         self.retarget_tool.retargetToOriginalUV(resolution=self.config.resolution)
+        
+        print("="*100)
 
         tiles = []
         raw_tiles = glob.glob(os.path.join(self.config.output_path, "retarget_*.png"))
@@ -298,7 +329,7 @@ class autoTexturePipeline:
             return
 
         mat_creator = autoMaMaterial(config=self.config)
-        mat_creator.mName = "AI_Wooden_Final_MAT"
+        mat_creator.mName = f"ai_{self.config.material_name}_mtl"
         mat_creator.mObject = self.selection
 
         mat_creator.create()
@@ -330,7 +361,7 @@ class autoTexturePipeline:
 
         extraction_output = self.extractor.getOutputs()
         print("\n [INFO] Rendered tiles EXRs: ", extraction_output)
-        self.retarget_tool.createTetrahedralPlanarUV() # --> sets planarUV map for retargeting
+        self.retarget_tool.createPlanarUV(method=self.config.renderMode) # --> sets planarUV map for retargeting
 
         ##########################################
         ## DIFFUSION MODEL
@@ -344,19 +375,36 @@ class autoTexturePipeline:
         ##########################################
         ## DIFFUSION RETARGETING FOR CLEANING
         ##########################################
-        print("\n --- 2. Retargeting Diffusion for cleaning ---")
-        diffusion_tiles = self.retarget_collage(diffuse_files, name="diffusion")
-        print("\n [INFO] Retargeted diffusion tiles: ", diffusion_tiles)
+        # print("\n --- 2. Retargeting Diffusion for cleaning ---")
+        # diffusion_tiles = self.retarget_collage(diffuse_files, name="diffusion")
+        # print("\n [INFO] Retargeted diffusion tiles: ", diffusion_tiles)
 
         ##########################################
         ## NORMAL RETARGETING FOR CLEANING
         ##########################################
+
+
         print("\n --- 3. Retargeting Normals for cleaning ---")
         normal_path = extraction_output.get("normals")
+        print("Before retargeting: ", normal_path)
         normal_tiles = self.retarget_collage(normal_path, name="normal")
         print("\n [INFO] Retargeted normal tiles: ", normal_tiles)
-        
+
         # setting up planar UVs for the extraction
+        
+        
+        ###########################################
+        ## SET MATERIAL MAYA
+        ###########################################
+        diffuse_files = normal_tiles # -> temporal statement
+        print("Saving textures on: ", self.config.textures_path)
+        print("Diffusion files", diffuse_files)
+        print("Normal tiles", normal_tiles)
+
+        mtl = mapsMaterialGenerator(self.config.generated_images, diffuse_files[0], normal_tiles[0], self.config.textures_path)
+        mtl.create()
+        self.assign_material(mtl.getFiles())
+        print("\n====== Pipeline Complete ======")
 
         """
         self.setup_uvs()

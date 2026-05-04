@@ -4,8 +4,6 @@ import os
 import math
 import sys
 
-sys.path.append(r"D:\DANI\PROJECTS_2026\autotexturingmaya\env\menv\lib\site-packages")
-
 # ==============================================================
 # GeometryPlanarExtractor
 # Renders 6 orthographic views of selected geometry via Arnold.
@@ -18,14 +16,13 @@ class GeometryPlanarExtractor:
     # VIEW_ORDER and VIEW_ROTATIONS moved to config
 
     def __init__(self, export_path=None, resolution=None, config=None):
-        if config is None:
-            from config import configuration
-            config = configuration()
-        self.config       = config
-        self.export_path  = export_path if export_path else self.config.temporal_path
-        self.resolution   = resolution if resolution else self.config.resolution
-        self.cam_name     = self.config.camera_name
-        self.cam_shape    = None
+        self.config = config
+        self.export_path = export_path if export_path else self.config.temporal_path
+        self.resolution = resolution if resolution else self.config.resolution
+
+        self.cam_name = self.config.camera_name
+        self.cam_shape = None
+
         self._tmp_lights  = []   # track provisional lights for cleanup
 
     # ----------------------------------------------------------
@@ -240,6 +237,8 @@ class GeometryPlanarExtractor:
         print(f"  [cam] Created orthographic camera: {self.cam_name}")
 
     def _frame_camera(self, view_name, bb_min, bb_max):
+        print(view_name)
+        print(self.config.view_rotations)
         rx, ry, rz = self.config.view_rotations[view_name]
         cx = (bb_min[0] + bb_max[0]) * 0.5
         cy = (bb_min[1] + bb_max[1]) * 0.5
@@ -291,12 +290,22 @@ class GeometryPlanarExtractor:
         self._frame_camera(view_name, bb_min, bb_max)
 
         self._set_render_globals_exr()
+        
+        # Ensure animation is off and padding is 0 for clean filenames
+        cmds.setAttr("defaultRenderGlobals.animation", 0)
+        cmds.setAttr("defaultRenderGlobals.extensionPadding", 0)
+        cmds.setAttr("defaultRenderGlobals.periodInExt", 0)
+        cmds.setAttr("defaultRenderGlobals.putFrameBeforeExt", 0)
+
         # No <RenderPass> token in prefix because we merge everything into one file
         exr_prefix = os.path.join(self.export_path, view_name)
         cmds.setAttr("defaultArnoldDriver.prefix", exr_prefix, type="string")
+        
         print(f"  [render] {view_name} merged AOV EXR ...")
+        
+        # Using batch=False to ensure the render is synchronous
         cmds.arnoldRender(width=self.resolution, height=self.resolution,
-                          camera=self.cam_shape, batch=True)
+                          camera=self.cam_shape, batch=False)
 
         exr_file = os.path.join(self.export_path, f"{view_name}.exr")
         return {"exr": exr_file}
@@ -323,7 +332,8 @@ class GeometryPlanarExtractor:
 
         # Render all 6 views
         all_passes = {}
-        for view_name in self.config.face_order:
+        print("-------------- > face_order_6", self.config.face_order_6)
+        for view_name in self.config.face_order_6:
             print(f"\n[view] === {view_name.upper()} ===")
             all_passes[view_name] = self._render_view(view_name, bb_min, bb_max)
 

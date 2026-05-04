@@ -52,12 +52,19 @@ class paths:
 class configuration:
     
     # System Paths
+    material_name = f"basicmaterial"
+
+    renderMode = "cube"
+    camera_name = f"_temp_camera"
+
+    SERVER = False
+
     script_name = "mPiplineCreationSDXL.py"
+    models_json = r"D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/data/models.json"
 
     # MODELS PATHS
 
     base_model = "sdxl"
-
     controlnet_model = "diffusers/controlnet-normal-sdxl-1.0"
 
     ip_adapter_model = "h94/IP-Adapter"
@@ -70,9 +77,6 @@ class configuration:
     resolution = 1024
 
     # PATHS
- 
-    material_name = f"basicmaterial"
-
     temporal_path = f"{paths.BASE_DIR}/output/{material_name}/temp"
     textures_path = f"{paths.BASE_DIR}/output/{material_name}/textures"
     output_path = f"{paths.BASE_DIR}/output/{material_name}"
@@ -99,6 +103,8 @@ class configuration:
     generated_images = ["diffuse", "roughness", "metalness", "normal", "height"]
 
     face_order = ["face_0", "face_1", "face_2", "face_3"]
+
+    face_order_6 = ["top", "bottom", "front", "back", "right", "left"]
 
     # -------------------------------
     # SYSTEM 
@@ -133,6 +139,16 @@ class configuration:
     seam_fixer_strength = 0.55
     seam_fixer_steps = 25
 
+    retargetUV = True
+
+    view_rotations = {
+    "top":    (-90,  0,  0),
+    "bottom": ( 90,  0,  0),
+    "front":  ( 0,  0,  0),
+    "back":   ( 0,180,  0),
+    "left":   ( 0, 90,  0),
+    "right":  ( 0,-90,  0),
+    }
 
     def printdata(self):
         return f"""

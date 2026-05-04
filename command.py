@@ -35,6 +35,54 @@ import config as conf
 _general_configuration = conf.configuration()
 
 
+# RELOAD
+
+
+################################################
+## IMPORTING PIPELINES
+################################################
+
+import mPipline.geoExtraction.geometryRenderer
+
+import mPipline.geoExtractionSix.geoPlanarRenderer
+
+import mPipline.exrCollage.exrCollageGenerator
+import mPipline.exrCollage.exrCollageBroker
+
+import mPipline.mtlMaya.materialCreation
+import mPipline.uvUtils.reUvPorjection
+import mPipline.mtlMaya.mtlMaterialMapsCreation
+
+import mGui
+import backServer
+
+################################################
+## RELOADING PIPELINES FOR DEVELOPING
+################################################
+
+def maya_remiport_libs():
+    importlib.reload(conf)
+    
+    importlib.reload(mPipline.geoExtraction.geometryRenderer)
+    importlib.reload(mPipline.geoExtractionSix.geoPlanarRenderer)
+
+    importlib.reload(mPipline.exrCollage.exrCollageGenerator)
+    importlib.reload(mPipline.exrCollage.exrCollageBroker)
+    
+    importlib.reload(mPipline.mtlMaya.materialCreation)
+    importlib.reload(mPipline.uvUtils.reUvPorjection)
+    importlib.reload(mPipline.mtlMaya.mtlMaterialMapsCreation)
+
+    importlib.reload(mGui)
+    importlib.reload(backServer)
+
+    importlib.reload(mPipline.geoExtractionSix.geoPlanarExtraction)
+    importlib.reload(mPipline.geoExtractionSix.geoPlanarReProjectUV)
+    importlib.reload(mPipline.geoExtractionSix.geoPlanarRenderer)
+
+maya_remiport_libs()
+
+
 ################################################
 ## IMPORTING PIPELINES
 ################################################

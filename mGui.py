@@ -29,9 +29,8 @@ except ImportError:
 
 
 ## PIPELINE IMPORTS
-
-from cModels import cModels
 from config import configuration
+import backServer as bk
 
 
 def get_nvml_vram():
@@ -73,8 +72,8 @@ class automaytexGUI(QMainWindow):
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
         
         self.reference_images = []
-        self.models = cModels()
-
+        self.server_process = None
+        
         self.populate()
 
     def set_callback(self, callback):
@@ -188,9 +187,19 @@ class automaytexGUI(QMainWindow):
         # --------------------------------------
         # Load button
         # --------------------------------------
+        self.start_server = QPushButton("Start Server")
+        self.start_server.clicked.connect(self._start_server)
+        layout.addWidget(self.start_server)
+
+        layout.addSpacing(10)
+
         self.load_button = QPushButton("Load Models")
         self.load_button.clicked.connect(self._load_models)
         layout.addWidget(self.load_button)
+
+        self.unload_button = QPushButton("Unload Models")
+        self.unload_button.clicked.connect(self._unload_models)
+        layout.addWidget(self.unload_button)
 
         layout.addStretch()
         return panel
@@ -219,10 +228,17 @@ class automaytexGUI(QMainWindow):
 
     # EXTERNAL LIB CALL
     def _load_models(self):
-        self.models.load_all(config=configuration())
+        bk._load_all_models()
+        print("Models loaded")
 
     def _unload_models(self):
-        self.models.unload_all()
+        bk._unload_all_models()
+        print("Models unloaded")
+
+    def _start_server(self):
+        self.server_process = bk.start_server()
+        print(self.server_process)
+
 
     def _create_left_panel(self):
         """Create left panel with main settings and generate button."""
@@ -244,6 +260,7 @@ class automaytexGUI(QMainWindow):
         # material name
         layout.addWidget(QLabel("// Material Name: "))
         self.material_name_input = QLineEdit()
+        self.material_name_input.setText("material01")
         self.material_name_input.setPlaceholderText("Enter material name...")
         layout.addWidget(self.material_name_input)
 
@@ -328,11 +345,23 @@ class automaytexGUI(QMainWindow):
         save_path_layout.addWidget(self.save_path_btn)
         layout.addLayout(save_path_layout)
 
+        # Render Type
+        layout.addWidget(QLabel("// Render Type: "))
+        render_layout = QHBoxLayout()
+        self.render_combo = QComboBox()
+        self.render_combo.addItems(["cube", "thetredral"])
+        render_layout.addWidget(self.render_combo)
+        layout.addLayout(render_layout)
+
         # Material Type
         layout.addWidget(QLabel("// Texture size: "))
         self.texture_combo = QComboBox()
         self.texture_combo.addItems(["512", "1024", "2048", "4096"])
         layout.addWidget(self.texture_combo)
+
+        self.retarget_uv_check = QCheckBox("Retarget UV")
+        self.retarget_uv_check.setChecked(True)
+        layout.addWidget(self.retarget_uv_check)
 
         # Material Type
         layout.addWidget(QLabel("// Maya Material Type: "))
@@ -535,7 +564,7 @@ class automaytexGUI(QMainWindow):
 
         dConf.cfg_scale = self.cfg_slider.value() / 10.0
         dConf.noise = self.noise_slider.value() / 100.0
-        dConf.camera_scale = 0.70
+        dConf.camera_scale = 1
 
         dConf.seed = 123456789  # could add a random seed generator or input field
         dConf.generated_images = []
@@ -550,6 +579,8 @@ class automaytexGUI(QMainWindow):
             dConf.generated_images.append("normal")
         if self.height_check.isChecked():
             dConf.generated_images.append("height")
+
+        dConf.retargetUV = self.retarget_uv_check.isChecked()
         
         dConf.base_model = self.model_combo.currentText().lower()
         dConf.system_prfered = self.system_combo.currentText()
@@ -559,11 +590,12 @@ class automaytexGUI(QMainWindow):
         dConf.assign_maya_material = self.assign_maya_check.isChecked()
         dConf.material_type = self.material_combo.currentText()
         dConf.output_path = self.save_path_input.text() if self.save_path_input.text() else dConf.output_path
+        
+        dConf.renderMode = self.render_combo.currentText()
 
         dConf.material_name = self.material_name_input.text()
 
         dConf.pathsetter()
-
         # manual validation method to handle correctly data.
         # dConf.validate()
         

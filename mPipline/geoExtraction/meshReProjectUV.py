@@ -134,10 +134,10 @@ class UVRetargetTool:
         s2 = math.sqrt(2)
         s23 = math.sqrt(2.0 / 3.0)
         tet_normals = {
-            "face_0": ( 0.0,            -1.0,       0.0   ),
-            "face_1": (-2*s2/3,          1.0/3,     0.0   ),
-            "face_2": ( s2/3,            1.0/3,    -s23   ),
-            "face_3": ( s2/3,            1.0/3,     s23   ),
+            "face_0": ( 0.0,            -1.0,       0.0   ),   # bottom face
+            "face_1": (-2*s2/3,          1.0/3,     0.0   ),   # front-right
+            "face_2": ( s2/3,            1.0/3,    -s23   ),   # back-right
+            "face_3": ( s2/3,            1.0/3,     s23   ),   # back-left
         }
 
         # Normalize tet_normals

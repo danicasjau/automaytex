@@ -161,6 +161,12 @@ class UVRetargetTool:
     # PUBLIC – CREATE TETRAHEDRAL PLANAR UV
     # ------------------------------------------------------------------
 
+    def createPlanarUV(self, method):
+        if method == "cube":
+            self.createCubePlanarUV()
+        else:
+            self.createTetrahedralPlanarUV()
+
     def createTetrahedralPlanarUV(self) -> None:
         """
         Creates the 'planarUV' set by projecting the mesh faces onto the 4 planes
@@ -268,6 +274,76 @@ class UVRetargetTool:
                 cmds.polyEditUV(faces[i:i+chunk_size], uValue=col, vValue=row)
 
         print("[INFO] Created planarUV set for 4 tetrahedral planes.")
+
+
+    def createCubePlanarUV(self, selection=None):
+        sel = selection if selection is not None else cmds.ls(sl=True, long=True)
+        transforms = cmds.ls(sel, type="transform", long=True)
+        
+        # Try finding shapes if no transforms explicitly selected
+        if not transforms:
+            shapes = cmds.ls(sel, dag=True, shapes=True, long=True)
+            if shapes:
+                transforms = list({cmds.listRelatives(s, parent=True, fullPath=True)[0] for s in shapes})
+                
+        if not transforms:
+            cmds.warning("[GeoPlanarUV] No geometry provided. Please select at least one mesh.")
+            return
+            
+        bb_min, bb_max = self.get_bounding_box(transforms)
+        cx = (bb_min[0] + bb_max[0]) * 0.5
+        cy = (bb_min[1] + bb_max[1]) * 0.5
+        cz = (bb_min[2] + bb_max[2]) * 0.5
+        
+        dx = bb_max[0] - bb_min[0]
+        dy = bb_max[1] - bb_min[1]
+        dz = bb_max[2] - bb_min[2]
+        
+        padding = 0.08
+        
+        # Apply planar projections per transform
+        for tfm in transforms:
+            groups = self.classify_faces(tfm)
+            
+            for view_name, faces in groups.items():
+                if not faces:
+                    continue
+                    
+                # Mirroring GeometryPlanarExtractor bounding calculations identically
+                if view_name in ("front", "back"):
+                    horiz, vert = dx, dy
+                elif view_name in ("left", "right"):
+                    horiz, vert = dz, dy
+                else:
+                    horiz, vert = dx, dz
+                
+                ortho_w = max(horiz, vert) * (1.0 + padding)
+                rx, ry, rz = self.VIEW_ROTATIONS[view_name]
+                
+                # Perform the planar projection explicitly creating 0..1 UV layout
+                cmds.polyPlanarProjection(faces, 
+                                          rx=rx, ry=ry, rz=rz, 
+                                          pc=[cx, cy, cz], 
+                                          pw=ortho_w, ph=ortho_w,
+                                          icx=0.5, icy=0.5,
+                                          md="p")
+                                          
+                # Map to sequential UDIM tiles matching exrCollageBroker
+                # 1001, 1002, 1003, 1004, 1005, 1006
+                idx = self.LAYOUT_ORDER.index(view_name)
+                
+                # A standard UDIM index is 1001 + u + 10*v.
+                # Here, idx ranges from 0 to 5, so v=0, u=idx.
+                u_shift = float(idx)
+                v_shift = 0.0
+                
+                # Shift UVs from [0, 1] base scale into the correct UDIM U offset
+                cmds.polyEditUV(faces, uValue=u_shift, vValue=v_shift)
+                
+                print(f"  [view] mapped '{view_name}' to UDIM {1001 + idx}")
+                
+        print("\n=== GeoPlanarUVProjection DONE ===")
+        print(f"Applied 6-planar UV layout routing to UDIMs 1001-1006 for {self.LAYOUT_ORDER}.")
 
     # ------------------------------------------------------------------
     # PUBLIC – MAIN RETARGET
@@ -411,6 +487,8 @@ class UVRetargetTool:
     # ==================================================================
     # PRIVATE HELPERS
     # ==================================================================
+
+    
 
     # ------------------------------------------------------------------
     # Rasterise one triangle

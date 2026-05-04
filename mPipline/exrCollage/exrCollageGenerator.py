@@ -260,25 +260,29 @@ def extract_normals(exr: OpenEXR.InputFile) -> np.ndarray:
 
 def build_collage(images: List[np.ndarray]) -> np.ndarray:
     """
-    Tile 6 images into a 3-column × 2-row grid.
+    Tile images into a grid. 
+    Supported counts:
+    - 6 images: 3-column x 2-row grid
+    - 4 images: 2-column x 2-row grid
 
-    All images must share the same (H, W).  The number of colour
-    channels (C) is taken from the first image.
-
-    Returns
-    -------
-    np.ndarray of shape (H*2, W*3, C) uint8.
+    All images must share the same (H, W).
     """
-    if len(images) != 6:
-        raise ValueError(f"Expected exactly 6 images, got {len(images)}")
+    count = len(images)
+    if count not in (4, 6):
+        raise ValueError(f"Expected 4 or 6 images, got {count}")
 
     h, w = images[0].shape[:2]
     c    = images[0].shape[2] if images[0].ndim == 3 else 1
 
-    canvas = np.zeros((h * 2, w * 3, c), dtype=np.uint8)
+    if count == 6:
+        cols, rows = 3, 2
+    else: # count == 4
+        cols, rows = 2, 2
+
+    canvas = np.zeros((h * rows, w * cols, c), dtype=np.uint8)
     for idx, img in enumerate(images):
-        row = idx // 3
-        col = idx %  3
+        row = idx // cols
+        col = idx %  cols
         if img.ndim == 2:
             img = img[:, :, np.newaxis]
         canvas[row * h:(row + 1) * h, col * w:(col + 1) * w] = img
@@ -337,10 +341,9 @@ class EXRCollageGenerator:
         depth_saturation: float          = DEPTH_SATURATION,
         resize_to:        Optional[int]  = RESIZE_TO,
     ) -> None:
-        if len(image_paths) != 6:
+        if len(image_paths) not in (4, 6):
             raise ValueError(
-                f"Exactly 6 image paths required "
-                f"(back / bottom / front / left / right / top); "
+                f"Exactly 4 or 6 image paths required; "
                 f"received {len(image_paths)}."
             )
         self.image_paths      = image_paths
@@ -352,11 +355,11 @@ class EXRCollageGenerator:
     def _extract_all(self,
                      extractor: Callable[[OpenEXR.InputFile], np.ndarray],
                      label: str) -> List[np.ndarray]:
-        """Open all 6 EXR files and apply *extractor* to each."""
+        """Open all EXR files and apply *extractor* to each."""
         results: List[np.ndarray] = []
         for i, path in enumerate(self.image_paths):
-            face = self.FACE_ORDER[i]
-            print(f"    [{face:6s}] {path}")
+            face_label = os.path.basename(path).replace(".exr", "")
+            print(f"    [{face_label:6s}] {path}")
             exr = _open_exr(path)
             try:
                 arr = extractor(exr)
