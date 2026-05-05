@@ -15,8 +15,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 CREATE_NEW_CONSOLE = 0x00000010
 
-def _load_all_models():
-    res = requests.get(f"{BASE_URL}/loadallmodels")
+def _load_all_models(config=None):
+    print("\n\n\nSending payload: \n", config)
+    payload = config.dict()
+    res = requests.post(f"{BASE_URL}/loadallmodels", json=payload)
     return res.json()
 
 def _unload_all_models():

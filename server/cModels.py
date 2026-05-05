@@ -63,7 +63,7 @@ class diffModels:
         # CPU offload flag (moves layers to CPU between forward passes)
         self.cpu_offload = getattr(self.config, "cpu_offload", False)
 
-        self.diffusion_model_type = getattr(self.config, "base_model")
+        self.diffusion_model_type = getattr(self.config, "base_model", "flash_sdxl")
 
         # Public handles – None until load_all() is called
         self.diffusion_model = None   # StableDiffusionXLControlNetPipeline
@@ -242,12 +242,19 @@ class diffModels:
     def get_dtype(self):
         return self.dtype
 
-    def load_all(self):
+    def load_all(self, configuration=None):
         # 1. Install missing models (no-op if flag is False)
         self.install_models()
 
+        if configuration is not None:
+            print("[cModels] UPDATING CONFIGURATION")
+            self.config = configuration
+
         # 2. Validate base model choice
-        base_model_name = getattr(self.config, "base_model", "sdxl")
+        base_model_name = self.config["base_model"]
+        self.diffusion_model_type = base_model_name
+        self.quantization = self.config["quantization"]
+
         if base_model_name not in SUPPORTED_BASE_MODELS:
             raise ValueError(
                 f"[cModels] Unsupported base_model '{base_model_name}'. "
@@ -258,9 +265,30 @@ class diffModels:
         base_path       = self._get_local_path(self.diffusion_model_type) # "sdxl")        # always SDXL here
         controlnet_path = self._get_local_path("controlnet")
         depth_path      = self._get_local_path("depth")
+
+        print(f"""
+        #######################################################################
+        #######################################################################
+        LOADING MODEL {self.diffusion_model_type}
+
+        #######################################################################
+
+        Quantization: {self.quantization}
+        Device: {self.device}
+
+        -----------------------------------------------------------------------
+        model path: {base_path}
+        controlnet_path: {controlnet_path}
+        depth_path: {depth_path}
+
+        #######################################################################
+        #######################################################################
+        """)
+
+
         # vae_path        = getattr(self.config, "vae_path", "")  # optional
 
-        print(f"\n[cModels] === Loading all models (quantization={self.config.quantization}, "
+        print(f"\n[cModels] === Loading all models (quantization={self.quantization}, "
               f"device={self.device}) ===")
 
         # 4. ControlNet

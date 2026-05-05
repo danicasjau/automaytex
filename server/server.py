@@ -35,11 +35,11 @@ def generate_texture(configuration: dict = Body(...)):
         "output_path": saved_path,
     }
 
-@app.get("/loadallmodels")
-def load_all_models():
+@app.post("/loadallmodels")
+def load_all_models(configuration: dict = Body(...)):
     print("Loading all models...")
 
-    models.load_all()
+    models.load_all(configuration)
     return True
 
 @app.get("/unloadallmodels")

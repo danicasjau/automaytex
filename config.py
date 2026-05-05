@@ -43,7 +43,6 @@ class paths:
 
 
 
-
 ################################################
 ## DEFAULT CONFIGURATION
 ################################################
@@ -64,7 +63,7 @@ class configuration:
 
     # MODELS PATHS
 
-    base_model = "fast_sdxl"
+    base_model = "flash_sdxl"
     controlnet_model = "diffusers/controlnet-normal-sdxl-1.0"
 
     ip_adapter_model = "h94/IP-Adapter"
