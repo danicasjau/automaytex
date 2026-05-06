@@ -39,9 +39,8 @@ DTYPE_MAP = {
     "int4": torch.float16,
 }
 
-SUPPORTED_BASE_MODELS = ["sdxl", "sd15"]
+SUPPORTED_BASE_MODELS = ["sdxl", "sd15", "fast_sdxl", "flash_sdxl"]
 SUPPORTED_QUANTIZATIONS = [None, "fp16", "int8", "int4", "bf16", "fp32"]
-
 
 # ---------------------------------------------------------------------------
 # cModels
@@ -64,6 +63,8 @@ class diffModels:
         # CPU offload flag (moves layers to CPU between forward passes)
         self.cpu_offload = getattr(self.config, "cpu_offload", False)
 
+        self.diffusion_model_type = getattr(self.config, "base_model", "flash_sdxl")
+
         # Public handles – None until load_all() is called
         self.diffusion_model = None   # StableDiffusionXLControlNetPipeline
         self.depth_model      = None   # DepthAnythingForDepthEstimation
@@ -76,9 +77,8 @@ class diffModels:
     # ------------------------------------------------------------------
     # Device resolution
     # ------------------------------------------------------------------
-    def _resolve_device(self) -> torch.device:
+    def _resolve_device(self):
         preferred = getattr(self.config, "preferred_device", "gpu").lower()
-
         cuda_ok = torch.cuda.is_available()
 
         if preferred in ("gpu", "cuda", "both"):
@@ -99,10 +99,6 @@ class diffModels:
     # JSON catalogue
     # ------------------------------------------------------------------
     def _load_catalogue(self) -> dict:
-        """
-        Read models.json and return a dict keyed by model 'name'.
-        e.g.  catalogue["sdxl"]  →  { id, name, model_name, ... }
-        """
         json_path = getattr(self.config, "models_json", "models.json")
         if not os.path.isfile(json_path):
             raise FileNotFoundError(f"[cModels] models.json not found: {json_path}")
@@ -119,10 +115,6 @@ class diffModels:
     # Path helpers
     # ------------------------------------------------------------------
     def _get_local_path(self, name: str) -> str:
-        """
-        Return the full local path for a catalogue entry.
-        Combines installation_path + installation_name.
-        """
         entry = self.catalogue[name]
         return os.path.join(entry["installation_path"], entry["installation_name"])
 
@@ -130,10 +122,6 @@ class diffModels:
     # Optional model installation
     # ------------------------------------------------------------------
     def install_models(self):
-        """
-        Download any missing models from HuggingFace if
-        self.config.installIfMissing is True.
-        """
         if not getattr(self.config, "installIfMissing", False):
             print("[cModels] installIfMissing=False – skipping installation")
             return
@@ -191,12 +179,7 @@ class diffModels:
             return AutoencoderKL.from_single_file(path, torch_dtype=self.dtype)
         return AutoencoderKL.from_pretrained(path, torch_dtype=self.dtype)
 
-    def _load_sdxl_pipeline(
-        self,
-        base_path: str,
-        controlnet: ControlNetModel,
-        vae: AutoencoderKL | None,
-    ) -> StableDiffusionXLControlNetPipeline:
+    def _load_sdxl_pipeline(self,base_path: str, controlnet: ControlNetModel, vae=None):
         print(f"[cModels] Loading SDXL pipeline from:\n  {base_path}")
 
         vae_kwargs = {"vae": vae} if vae is not None else {}
@@ -211,9 +194,22 @@ class diffModels:
 
         # --- Custom pipeline settings ---
         pipe.enable_attention_slicing()
-        # pipe.enable_xformers_memory_efficient_attention()  # uncomment if xformers installed
 
-        # Move to device or enable CPU offload
+        # Speed: channels_last memory layout (faster CUDA convolutions)
+        try:
+            pipe.unet.to(memory_format=torch.channels_last)
+            pipe.vae.to(memory_format=torch.channels_last)
+            print("[cModels] channels_last memory format enabled")
+        except Exception:
+            pass
+
+        # Speed: xformers memory-efficient attention (if installed)
+        try:
+            pipe.enable_xformers_memory_efficient_attention()
+            print("[cModels] xformers memory-efficient attention enabled")
+        except Exception:
+            print("[cModels] xformers not available – using default attention")
+
         if self.cpu_offload:
             print("[cModels] Enabling sequential CPU offload")
             pipe.enable_sequential_cpu_offload()
@@ -240,16 +236,25 @@ class diffModels:
             raise KeyError(f"[cModels] Unknown model '{name}' in catalogue")
         return self.catalogue[name]
 
-    def load_all(self):
-        """
-        Load every model specified in self.config into RAM / VRAM.
-        Installs missing models first if self.config.installIfMissing is True.
-        """
+    def get_device(self):
+        return self.device
+
+    def get_dtype(self):
+        return self.dtype
+
+    def load_all(self, configuration=None):
         # 1. Install missing models (no-op if flag is False)
         self.install_models()
 
+        if configuration is not None:
+            print("[cModels] UPDATING CONFIGURATION")
+            self.config = configuration
+
         # 2. Validate base model choice
-        base_model_name = getattr(self.config, "base_model", "sdxl")
+        base_model_name = self.config["base_model"]
+        self.diffusion_model_type = base_model_name
+        self.quantization = self.config["quantization"]
+
         if base_model_name not in SUPPORTED_BASE_MODELS:
             raise ValueError(
                 f"[cModels] Unsupported base_model '{base_model_name}'. "
@@ -257,23 +262,48 @@ class diffModels:
             )
 
         # 3. Resolve local paths from catalogue
-        base_path       = self._get_local_path("sdxl")        # always SDXL here
+        base_path       = self._get_local_path(self.diffusion_model_type) # "sdxl")        # always SDXL here
         controlnet_path = self._get_local_path("controlnet")
         depth_path      = self._get_local_path("depth")
-        vae_path        = getattr(self.config, "vae_path", "")  # optional
 
-        print(f"\n[cModels] === Loading all models (quantization={self.config.quantization}, "
+        print(f"""
+        #######################################################################
+        #######################################################################
+        LOADING MODEL {self.diffusion_model_type}
+
+        #######################################################################
+
+        Quantization: {self.quantization}
+        Device: {self.device}
+
+        -----------------------------------------------------------------------
+        model path: {base_path}
+        controlnet_path: {controlnet_path}
+        depth_path: {depth_path}
+
+        #######################################################################
+        #######################################################################
+        """)
+
+
+        # vae_path        = getattr(self.config, "vae_path", "")  # optional
+
+        print(f"\n[cModels] === Loading all models (quantization={self.quantization}, "
               f"device={self.device}) ===")
 
         # 4. ControlNet
         controlnet = self._load_controlnet(controlnet_path)
 
         # 5. VAE (optional)
-        vae = self._load_vae(vae_path)
+        # vae = self._load_vae(vae_path)
 
         # 6. Diffusion pipeline
         if base_model_name == "sdxl":
-            self.pipe = self._load_sdxl_pipeline(base_path, controlnet, vae)
+            self.pipe = self._load_sdxl_pipeline(base_path, controlnet)#, vae)
+        elif base_model_name == "fast_sdxl":
+            self.pipe = self._load_sdxl_pipeline(base_path, controlnet)#, vae)
+        elif base_model_name == "flash_sdxl":
+            self.pipe = self._load_sdxl_pipeline(base_path, controlnet)#, vae)
         elif base_model_name == "sd15":
             # SD1.5 branch – extend here with StableDiffusionControlNetPipeline
             raise NotImplementedError("[cModels] SD1.5 pipeline not yet implemented")

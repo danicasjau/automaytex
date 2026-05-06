@@ -165,7 +165,7 @@ class automaytexGUI(QMainWindow):
         # --------------------------------------
         layout.addWidget(QLabel("Model Type"))
         self.model_combo = QComboBox()
-        self.model_combo.addItems(["SDXL", "SD1.5", "FLUX"])
+        self.model_combo.addItems(["sdxl", "fast_sdxl", "flash_sdxl"])
         layout.addWidget(self.model_combo)
 
         # --------------------------------------
@@ -228,7 +228,8 @@ class automaytexGUI(QMainWindow):
 
     # EXTERNAL LIB CALL
     def _load_models(self):
-        bk._load_all_models()
+        current_conf = self.extract_generation_settings()
+        bk._load_all_models(current_conf)
         print("Models loaded")
 
     def _unload_models(self):

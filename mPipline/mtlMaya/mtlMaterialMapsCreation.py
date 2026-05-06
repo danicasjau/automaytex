@@ -1,14 +1,16 @@
 import os
 import cv2
 import numpy as np
+import backServer as bk
 
 class mapsMaterialGenerator():
-    def __init__(self, imagesToGenerate, diffuseImagePath, normalImagePath, outputPath=None):
+    def __init__(self, imagesToGenerate, diffuseImagePath, normalImagePath, outputPath=None, config=None):
+
         self.initial_normalCollageImagePath = normalImagePath
-
         self.diffuseImagePath = diffuseImagePath
-
         self.output_path = outputPath
+
+        self.config = config
 
         self.prompt = "detailed material texture, highly detailed, 8k"
         self.tex_generator = None
@@ -62,18 +64,10 @@ class mapsMaterialGenerator():
         }
     
     def create_diffuseMap(self, image_path):
-        if False:
-            if not self.tex_generator:
-                self.tex_generator = mPiplineCreationt.TextureGenerator()
-                
-            out_file = os.path.join(self.output_path, "diffuse.png")
-            print(f"[Info] Generating Diffuse Map: {out_file}")
-            
-            self.tex_generator.generate_texture(
-                prompt=self.prompt,
-                input_image_path=image_path,
-                output_path=out_file
-            )
+        if True:
+            print("Starting bk sending texture generation")
+            output = bk._generate_texture(self.config, image_path)
+            out_file = output.get("output_path", "")            
             return out_file
         else:
             diffuse_path = cv2.imread(image_path)

@@ -401,7 +401,7 @@ class autoTexturePipeline:
         print("Diffusion files", diffuse_files)
         print("Normal tiles", normal_tiles)
 
-        mtl = mapsMaterialGenerator(self.config.generated_images, diffuse_files[0], normal_tiles[0], self.config.textures_path)
+        mtl = mapsMaterialGenerator(self.config.generated_images, diffuse_files[0], normal_tiles[0], self.config.textures_path, self.config)
         mtl.create()
         self.assign_material(mtl.getFiles())
         print("\n====== Pipeline Complete ======")

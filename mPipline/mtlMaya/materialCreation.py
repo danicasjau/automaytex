@@ -55,16 +55,20 @@ class autoMaMaterial:
             mel.eval('generateAllUvTilePreviews;')
 
         if slot == "normal":
-            bump_node = cmds.shadingNode("bump2d", asUtility=True)
-            cmds.setAttr(bump_node + ".bumpInterp", 1) # Tangent Space Normal
-            cmds.connectAttr(file_node + ".outAlpha", bump_node + ".bumpValue", force=True)
-            cmds.connectAttr(bump_node + ".outNormal", self.material + ".normalCamera", force=True)
-            try: cmds.setAttr(file_node + ".colorSpace", "Raw", type="string")
-            except: pass
+            # Using Arnold's aiNormalMap instead of standard bump2d for better Arnold integration
+            normal_map_node = cmds.shadingNode("aiNormalMap", asUtility=True)
+            cmds.connectAttr(file_node + ".outColor", normal_map_node + ".input", force=True)
+            cmds.connectAttr(normal_map_node + ".outValue", self.material + ".normalCamera", force=True)
+            
+            try: 
+                cmds.setAttr(file_node + ".colorSpace", "Raw", type="string")
+            except: 
+                pass
             return
 
         if slot == "height":
             disp_node = cmds.shadingNode("displacementShader", asShader=True)
+            cmds.setAttr(disp_node + ".scale", 0.01)
             cmds.connectAttr(file_node + ".outAlpha", disp_node + ".displacement", force=True)
             cmds.connectAttr(disp_node + ".displacement", self.shading_group + ".displacementShader", force=True)
             try: cmds.setAttr(file_node + ".colorSpace", "Raw", type="string")
