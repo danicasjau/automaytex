@@ -53,7 +53,9 @@ import mPipline.mtlMaya.materialCreation
 import mPipline.uvUtils.reUvPorjection
 import mPipline.mtlMaya.mtlMaterialMapsCreation
 
-import mGui
+import advancedsettings
+
+import mlGui
 import backServer
 
 ################################################
@@ -73,12 +75,13 @@ def maya_remiport_libs():
     importlib.reload(mPipline.uvUtils.reUvPorjection)
     importlib.reload(mPipline.mtlMaya.mtlMaterialMapsCreation)
 
-    importlib.reload(mGui)
+    importlib.reload(mlGui)
     importlib.reload(backServer)
 
     importlib.reload(mPipline.geoExtractionSix.geoPlanarExtraction)
     importlib.reload(mPipline.geoExtractionSix.geoPlanarReProjectUV)
     importlib.reload(mPipline.geoExtractionSix.geoPlanarRenderer)
+    importlib.reload(advancedsettings)
 
 maya_remiport_libs()
 
@@ -87,13 +90,13 @@ maya_remiport_libs()
 ## IMPORTING PIPELINES
 ################################################
 
-import mGui
+import mlGui
 import autotex
 
-importlib.reload(mGui)
+importlib.reload(mlGui)
 importlib.reload(autotex)
 
-import mGui as mayagui
+import mlGui as mayagui
 import autotex
 
 # Keep a global reference to the window so it isn't garbage collected by Maya

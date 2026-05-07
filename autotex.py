@@ -71,7 +71,7 @@ import mPipline.mtlMaya.materialCreation
 import mPipline.uvUtils.reUvPorjection
 
 import mPipline.mtlMaya.mtlMaterialMapsCreation
-import mGui
+import mlGui
 
 ################################################
 ## RELOADING PIPELINES FOR DEVELOPING
@@ -90,7 +90,7 @@ def maya_remiport_libs():
     importlib.reload(mPipline.uvUtils.reUvPorjection)
     
     importlib.reload(mPipline.mtlMaya.mtlMaterialMapsCreation)
-    importlib.reload(mGui)
+    importlib.reload(mlGui)
 
 maya_remiport_libs()
 
@@ -110,7 +110,7 @@ from mPipline.uvUtils.reUvPorjection import UVRetargetTool
 
 from mPipline.mtlMaya.mtlMaterialMapsCreation import mapsMaterialGenerator
 
-import mGui as mayagui
+import mlGui as mayagui
 
 
 ################################################
