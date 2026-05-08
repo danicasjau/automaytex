@@ -52,6 +52,9 @@ class automaytexGUI(QMainWindow):
         
         self.reference_images = []
         self.server_process = None
+
+        # Create a single persistent AdvancedSettings instance
+        self.adv = advancedsettings.AdvancedSettings()
         
         self.populate()
 
@@ -319,9 +322,10 @@ class automaytexGUI(QMainWindow):
         return panel
     
     def show_advanced_settings(self):
-        print("Showing advanced settings")
-        self.advanced_settings_panel = advancedsettings.AdvancedSettings()
-        self.advanced_settings_panel.show()
+        """Show the persistent AdvancedSettings dialog."""
+        self.adv.show()
+        self.adv.raise_()
+        self.adv.activateWindow()
 
 
     def _create_settings_panel(self):
@@ -444,50 +448,31 @@ class automaytexGUI(QMainWindow):
         self.texturize_signal.emit(settings)
 
     def extract_generation_settings(self):
-        dConf = configuration()
+        dConf = self.adv.extract_generation_settings()
 
-        dConf.positive_prompt = self.prompt_input.toPlainText()
-        dConf.negative_prompt = self.n_prompt_input.toPlainText()
+        # --- Override with main GUI values ---
+        dConf.positive_prompt   = self.prompt_input.toPlainText() if hasattr(self, 'prompt_input') and self.prompt_input.toPlainText() else dConf.positive_prompt
         dConf.texture_resolution = self.texture_combo.currentText()
-        dConf.inference_steps = self.steps_slider.value()
+        dConf.inference_steps   = self.steps_slider.value()
+        dConf.cfg_scale         = self.cfg_slider.value() / 10.0
+        dConf.noise             = self.noise_slider.value() / 100.0
+        dConf.base_model        = self.model_combo.currentText().lower()
+        dConf.system_prfered    = self.system_combo.currentText()
+        quant_text              = self.quant_combo.currentText()
+        dConf.quantization      = quant_text if quant_text != "None" else None
+        dConf.material_name     = self.material_name_input.text()
+        dConf.output_path       = self.save_path_input.text() if self.save_path_input.text() else dConf.output_path
 
-        dConf.cfg_scale = self.cfg_slider.value() / 10.0
-        dConf.noise = self.noise_slider.value() / 100.0
-        dConf.camera_scale = 1
-
-        dConf.seed = 123456789  # could add a random seed generator or input field
         dConf.generated_images = []
+        if self.diffuse_check.isChecked():   dConf.generated_images.append("diffuse")
+        if self.roughness_check.isChecked(): dConf.generated_images.append("roughness")
+        if self.metalness_check.isChecked(): dConf.generated_images.append("metalness")
+        if self.normal_check.isChecked():    dConf.generated_images.append("normal")
+        if self.height_check.isChecked():    dConf.generated_images.append("height")
 
-        if self.diffuse_check.isChecked():
-            dConf.generated_images.append("diffuse")
-        if self.roughness_check.isChecked():
-            dConf.generated_images.append("roughness")
-        if self.metalness_check.isChecked():
-            dConf.generated_images.append("metalness")
-        if self.normal_check.isChecked():
-            dConf.generated_images.append("normal")
-        if self.height_check.isChecked():
-            dConf.generated_images.append("height")
-
-        dConf.retargetUV = self.retarget_uv_check.isChecked()
-        
-        dConf.base_model = self.model_combo.currentText().lower()
-        dConf.system_prfered = self.system_combo.currentText()
-        quant_text = self.quant_combo.currentText()
-
-        dConf.quantization = quant_text if quant_text != "None" else None
-        dConf.assign_maya_material = self.assign_maya_check.isChecked()
-        dConf.material_type = self.material_combo.currentText()
-        dConf.output_path = self.save_path_input.text() if self.save_path_input.text() else dConf.output_path
-        
-        dConf.renderMode = self.render_combo.currentText()
-
-        dConf.material_name = self.material_name_input.text()
+        dConf.seed = 123456789
 
         dConf.pathsetter()
-        # manual validation method to handle correctly data.
-        # dConf.validate()
-        
         return dConf
 
 def main():

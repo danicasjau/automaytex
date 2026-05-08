@@ -32,6 +32,8 @@ import backServer as bk
 import importlib
 import importlib.util
 import platform
+import json
+from config import configuration, paths
 
 class AdvancedSettings(QDialog):
     def __init__(self):
@@ -40,6 +42,9 @@ class AdvancedSettings(QDialog):
         self.resize(700, 450)
         self.starttex = ">>> "
         self.lora_paths = []
+
+        # Load model paths from models.json
+        self._load_model_paths_from_json()
 
         # Main Layout: Sidebar on left, Content on right
         main_layout = QHBoxLayout(self)
@@ -68,7 +73,10 @@ class AdvancedSettings(QDialog):
         main_layout.addWidget(self.sidebar)
         main_layout.addWidget(self.stack)
         
-        self.sidebar.setCurrentRow(1) # Start on Models
+        self.sidebar.setCurrentRow(0)  # Start on Maya
+
+        # Apply defaults from config.py
+        self._apply_config_defaults()
 
     def display_panel(self, index):
         self.stack.setCurrentIndex(index)
@@ -471,10 +479,88 @@ class AdvancedSettings(QDialog):
         row_layout.addLayout(ctrl_lay)
         return row_layout
 
-    def check_installed(self, filename):
-        # Checks if file exists in the general directory (or a mock check)
-        full_path = os.path.join(self.gen_path_input.text(), filename)
+    def check_installed(self, full_path):
+        """Check if a model file exists at the given path."""
         return os.path.exists(full_path)
+
+    def _load_model_paths_from_json(self):
+        """Load model installation paths from models.json on startup."""
+        conf = configuration()
+        json_path = conf.models_json
+        self._model_paths = {}  # name -> full installation path
+        try:
+            with open(json_path, "r") as f:
+                data = json.load(f)
+            for m in data.get("models", []):
+                name = m.get("name", "")
+                install_path = m.get("installation_path", "")
+                install_name = m.get("installation_name", "")
+                self._model_paths[name] = os.path.join(install_path, install_name)
+        except Exception as e:
+            print(f"[AdvancedSettings] Could not load models.json: {e}")
+
+    def _apply_config_defaults(self):
+        """Pre-populate GUI widgets with defaults from config.configuration."""
+        d = configuration()
+
+        # Maya panel
+        idx = self.render_combo.findText(d.renderMode)
+        if idx >= 0: self.render_combo.setCurrentIndex(idx)
+
+        idx = self.material_combo.findText(d.material_type)
+        if idx >= 0: self.material_combo.setCurrentIndex(idx)
+
+        self.camera_scale_spin.setValue(float(d.camera_scale))
+        self.uv_chunk_spin.setValue(float(d.uv_chunk_size))
+        self.seam_strength.setValue(float(d.seam_fixer_strength))
+        self.seam_steps.setValue(float(d.seam_fixer_steps))
+        self.retarget_uv_check.setChecked(d.retargetUV)
+        self.assign_maya_check.setChecked(d.assign_maya_material)
+
+        # Generation panel
+        if hasattr(self, 'prompt_input'):
+            self.prompt_input.setPlainText(d.positive_prompt.strip())
+        if hasattr(self, 'n_prompt_input'):
+            self.n_prompt_input.setPlainText(d.negative_prompt.strip())
+
+    def extract_generation_settings(self):
+
+        """Build and return a configuration() object from the current GUI state."""
+        dConf = configuration()
+
+        # --- Maya panel ---
+        dConf.renderMode        = self.render_combo.currentText()
+        dConf.material_type     = self.material_combo.currentText()
+        dConf.camera_scale      = self.camera_scale_spin.value()
+        dConf.uv_chunk_size     = self.uv_chunk_spin.value()
+        dConf.seam_fixer_strength = self.seam_strength.value()
+        dConf.seam_fixer_steps  = int(self.seam_steps.value())
+        dConf.retargetUV        = self.retarget_uv_check.isChecked()
+        dConf.assign_maya_material = self.assign_maya_check.isChecked()
+
+        # Bake render size (two dropdowns)
+        try:
+            dConf.bake_render_width  = int(self.render_size_width_combo.currentText())
+            dConf.bake_render_height = int(self.render_size_height_combo.currentText())
+        except ValueError:
+            pass
+
+        # --- Generation panel ---
+        if hasattr(self, 'prompt_input'):
+            dConf.positive_prompt = self.prompt_input.toPlainText()
+        if hasattr(self, 'n_prompt_input'):
+            dConf.negative_prompt = self.n_prompt_input.toPlainText()
+        dConf.lora_paths = list(self.lora_paths)
+
+        # --- Model paths (from JSON, overrideable via Models panel) ---
+        if self._model_paths.get("sdxl"):
+            dConf.diffusion_model = self._model_paths["sdxl"]
+        if self._model_paths.get("controlnet"):
+            dConf.controlnet_model = self._model_paths["controlnet"]
+        if self._model_paths.get("depth"):
+            dConf.depth_model = self._model_paths["depth"]
+
+        return dConf
 
     # SYSTEM UPDATE
     def update_usage(self):
