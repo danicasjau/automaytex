@@ -16,34 +16,6 @@ import os
 import math
 import sys
 
-# ----------------------------------------------------------
-# Regular tetrahedron face normals (outward, unit vectors)
-# and matching camera rotations (rx, ry, rz in degrees).
-#
-# A regular tetrahedron has 4 equilateral triangle faces.
-# Each camera is placed along the outward normal of one face,
-# pointing toward the centroid, so together they cover the
-# object from all sides with no redundant orthogonal views.
-#
-# Normals derived from a canonical tetrahedron inscribed in
-# the unit sphere with one face flat on the bottom:
-#
-#   v0 = ( 0,       1,        0     )   ← top vertex
-#   v1 = ( 2√2/3,  -1/3,      0     )
-#   v2 = (-√2/3,   -1/3,  √(2/3)  )
-#   v3 = (-√2/3,   -1/3, -√(2/3)  )
-#
-# Face normals (inward → flip for camera direction):
-#   face_0 (opposite v0, bottom) :  ( 0,     -1,      0    )
-#   face_1 (opposite v1)         :  (-2√2/3,  1/3,    0    )  normalised
-#   face_2 (opposite v2)         :  ( √2/3,   1/3,  -√(2/3)) normalised
-#   face_3 (opposite v3)         :  ( √2/3,   1/3,   √(2/3)) normalised
-#
-# Maya camera Euler conventions (intrinsic XYZ, degrees):
-#   rx = -arcsin(ny)          (pitch: negative = looking up)
-#   ry =  arctan2(nx, nz)     (yaw around world Y)
-#   rz = 0                    (no roll needed)
-# ----------------------------------------------------------
 
 def _tetrahedron_views():
     """

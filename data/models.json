@@ -6,7 +6,7 @@
             "model_name": "Juggernaut XL v9",
             "hugging_face_url": "https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/resolve/main/juggernautXL_v9Rdphoto2Lightning.safetensors",
             "download_name": "juggernautXL_v9Rdphoto2Lightning.safetensors",
-            "installation_path": "E:/Program Files/ComfyUI/ComfyUI/models/checkpoints/",
+            "installation_path": "./models/",
             "installation_name": "juggernautXL_v9Rdphoto2Lightning.safetensors"
         },
         {
@@ -15,7 +15,7 @@
             "model_name": "ControlNet Union SDXL",
             "hugging_face_url": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/main/diffusion_pytorch_model_promaxx.safetensors",
             "download_name": "diffusion_pytorch_model_promaxx.safetensors",
-            "installation_path": "E:/Program Files/ComfyUI/ComfyUI/models/controlnet/",
+            "installation_path": "./models/",
             "installation_name": "diffusion_pytorch_model_promaxx.safetensors"
         },
         {
@@ -24,7 +24,7 @@
             "model_name": "Depth Anything ViT-L14",
             "hugging_face_url": "https://huggingface.co/LiheYoung/depth-anything-vitl14/tree/main",
             "download_name": "depth_anything_vitl14",
-            "installation_path": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/models/",
+            "installation_path": "./models/",
             "installation_name": "depth_anything_vitl14"
         },
         {
@@ -33,7 +33,7 @@
             "model_name": "SDXL lightning 4step",
             "hugging_face_url": "https://huggingface.co/ByteDance/SDXL-Lightning/tree/main/sdxl_lightning_4step.safetensors",
             "download_name": "sdxl_lightning_4step.safetensors",
-            "installation_path": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/models/sdxl-turbo/",
+            "installation_path": "./models/",
             "installation_name": "sdxl_lightning_4step.safetensors"
         },
         {
@@ -42,7 +42,7 @@
             "model_name": "SDXL lightning 1step x0",
             "hugging_face_url": "https://huggingface.co/ByteDance/SDXL-Lightning/tree/main/sdxl_lightning_1step_x0.safetensors",
             "download_name": "sdxl_lightning_1step_x0.safetensors",
-            "installation_path": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/models/sdxl-flash/",
+            "installation_path": "./models/",
             "installation_name": "sdxl_lightning_1step_x0.safetensors"
         }
     ]

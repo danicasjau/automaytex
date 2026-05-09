@@ -383,12 +383,5 @@ def start_gui():
 
 def start_pipeline(_configuration=None):
     print(f"Starting configuration: with following data: {_configuration}")
-    
-
-
     pipeline = autoTexturePipeline(_configuration)
     pipeline.run()
-
-
-if __name__ == "__main__":
-    start_gui()

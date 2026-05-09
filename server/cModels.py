@@ -3,7 +3,6 @@
 # automaytex/cModels.py
 # Model management: load, unload, install diffusion + controlnet + depth models
 
-
 ################################################
 ## IMPORTING GENERAL LIBRARIES
 ################################################
