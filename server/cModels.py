@@ -4,6 +4,10 @@
 # Model management: load, unload, install diffusion + controlnet + depth models
 
 
+################################################
+## IMPORTING GENERAL LIBRARIES
+################################################
+
 import os
 import json
 import torch
@@ -24,6 +28,9 @@ from diffusers import (  # type: ignore
     EulerDiscreteScheduler,
 )
 
+################################################
+## TORCH CONFIGURATION
+################################################
 
 # ---------------------------------------------------------------------------
 # Quantization dtype map
@@ -226,6 +233,18 @@ class diffModels:
             path, torch_dtype=self.dtype
         ).to(self.device)
         return processor, model
+
+    def are_all_loaded(self):
+        if self.diffusion_model is None:
+            print("[cModels] Diffusion model not loaded.")
+            return False
+        if self.depth_model is None:
+            print("[cModels] Depth model not loaded.")
+            return False
+        if self.depth_processor is None:
+            print("[cModels] Depth processor not loaded.")
+            return False
+        return True
 
     # ------------------------------------------------------------------
     # Public API

@@ -637,7 +637,8 @@ cd automaytex</pre>
             <h3>Step 2: Install Python Dependencies into Maya</h3>
             <p>You <strong>must</strong> use Maya's bundled Python interpreter (<code>mayapy.exe</code> on Windows or
                 <code>mayapy</code> on macOS/Linux). Do not use your system's global Python environment, as Maya will
-                not be able to read those modules.</p>
+                not be able to read those modules.
+            </p>
             <pre><span class="cm"># Locate mayapy (usually C:\Program Files\Autodesk\Maya2026\bin\mayapy.exe)</span>
 <span class="cm"># Install PyTorch with CUDA 12.1 support:</span>
 mayapy -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
@@ -648,7 +649,8 @@ mayapy -m pip install diffusers transformers accelerate bitsandbytes pillow</pre
             <h3>Step 3: Download and Configure Model Weights</h3>
             <p>Due to file size limits, model weights are not bundled with the source code. You must download the
                 necessary checkpoint files (e.g., from HuggingFace or Civitai) and place them in the
-                <code>weights/</code> directory.</p>
+                <code>weights/</code> directory.
+            </p>
             <ul>
                 <li>Download SDXL Base 1.0 or your preferred model.</li>
                 <li>Download the corresponding ControlNet Normal Map model.</li>
@@ -797,7 +799,8 @@ mayapy -m pip install diffusers transformers accelerate bitsandbytes pillow</pre
                 closer to the camera (higher clarity) and smoothly blends the borders between overlapping views,
                 effectively erasing harsh transition seams.</p>
             <p>Finally, the synthesized texture is written to disk as a high-resolution EXR file, and a brand new
-                <code>aiStandardSurface</code> material node is created, wired, and assigned to the mesh in Maya.</p>
+                <code>aiStandardSurface</code> material node is created, wired, and assigned to the mesh in Maya.
+            </p>
         </section>
 
         <!-- 9. QUANTIZATION -->
@@ -805,9 +808,11 @@ mayapy -m pip install diffusers transformers accelerate bitsandbytes pillow</pre
             <h2><span class="n">9.</span> Dynamic VRAM Quantization</h2>
             <p>Loading multi-gigabyte AI models into GPU memory alongside Maya and Arnold is highly prone to crashing.
                 Automaytex includes an intelligent memory management system that queries
-                <code>torch.cuda.mem_get_info()</code> on initialization.</p>
+                <code>torch.cuda.mem_get_info()</code> on initialization.
+            </p>
             <p>Depending on the available VRAM, the engine dynamically applies <strong>Quantization</strong> via the
-                <code>bitsandbytes</code> library to shrink the memory footprint of the weights:</p>
+                <code>bitsandbytes</code> library to shrink the memory footprint of the weights:
+            </p>
             <table>
                 <thead>
                     <tr>
@@ -1038,7 +1043,8 @@ mayapy -m pip install diffusers transformers accelerate bitsandbytes pillow</pre
             <p><strong>Note on Temporary Files:</strong> During execution, Automaytex utilizes a temp directory
                 (defaulting to <code>/tmp/automaytex/</code>) where it stores intermediate files like
                 <code>uv_manifest.json</code>, individual AOV passes (<code>view_0_normals.exr</code>), and
-                pre-reprojected atlases. These files are highly useful for debugging rendering failures.</p>
+                pre-reprojected atlases. These files are highly useful for debugging rendering failures.
+            </p>
         </section>
 
         <!-- 14. TROUBLESHOOTING -->
@@ -1049,24 +1055,28 @@ mayapy -m pip install diffusers transformers accelerate bitsandbytes pillow</pre
             <p><strong>Cause:</strong> Your GPU completely ran out of VRAM, causing the PyTorch environment to crash
                 Maya.<br><strong>Solution:</strong> Open <code>config.yaml</code> and ensure
                 <code>quantization.force_fp16</code> is set to <code>false</code>. You can also manually adjust the VRAM
-                thresholds to force INT4 quantization, or lower the <code>render.atlas_resolution</code> to 512.</p>
+                thresholds to force INT4 quantization, or lower the <code>render.atlas_resolution</code> to 512.
+            </p>
 
             <h4>Error: ModuleNotFoundError: No module named 'torch'</h4>
             <p><strong>Cause:</strong> Dependencies were installed to your system's global Python, not Maya's internal
                 environment.<br><strong>Solution:</strong> Run the pip install commands strictly using
-                <code>mayapy.exe</code> as outlined in the Installation section.</p>
+                <code>mayapy.exe</code> as outlined in the Installation section.
+            </p>
 
             <h4>The Generated Texture has Horrible Seams and Glitches</h4>
             <p><strong>Cause:</strong> Your object's UV layout is poor (e.g., overlapping islands, stretched faces, or
                 islands rotated extremely far from the camera axis).<br><strong>Solution:</strong> Ensure your UVs are
                 fully laid out and non-overlapping. Alternatively, increase <code>render.aov_samples</code> in
-                <code>config.yaml</code> to generate a cleaner depth map, which improves blending accuracy.</p>
+                <code>config.yaml</code> to generate a cleaner depth map, which improves blending accuracy.
+            </p>
 
             <h4>The Texture Appears Very Generic and Lacks Detail</h4>
             <p><strong>Cause:</strong> The ControlNet constraint is overpowering the text
                 prompt.<br><strong>Solution:</strong> Open <code>rules.json</code> and reduce the
                 <code>controlnet_scale</code> slightly (e.g., from 0.85 to 0.75), and potentially increase the
-                <code>cfg_scale</code> to encourage the AI to adhere more strongly to the text prompt.</p>
+                <code>cfg_scale</code> to encourage the AI to adhere more strongly to the text prompt.
+            </p>
         </section>
 
         <!-- 15. GLOSSARY -->

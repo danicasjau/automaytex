@@ -22,7 +22,6 @@ class validation:
         "8k": 8194
     }
 
-
 ################################################
 ## DEFAULT PATHS - from JSON CONFIG FILE
 ################################################
@@ -42,24 +41,22 @@ class paths:
 
 
 
-
 ################################################
 ## DEFAULT CONFIGURATION
 ################################################
 
 @dataclass
 class configuration:
-    
     # System Paths
     material_name = f"basicmaterial"
 
-    renderMode = "cube"
+    renderMode = "thetredral"
     camera_name = f"_temp_camera"
 
     SERVER = False
 
     script_name = "mPiplineCreationSDXL.py"
-    models_json = r"D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/data/models.json"
+    models_json = fr"{os.environ.get('BASE_DIR')}/data/models.json"
 
     # MODELS PATHS
 
@@ -154,7 +151,8 @@ class configuration:
         MATERIAL NAME: {self.material_name}
         OUTPUT PATH: {self.output_path}
 
-
+        RENDER MODE: {self.renderMode}
+        CAMERA NAME: {self.camera_name}
 
         BASE MODEL: {self.base_model}
         CONTROLNET MODEL: {self.controlnet_model}
@@ -223,7 +221,9 @@ class configuration:
         }
 
     def pathsetter(self):
-        self.output_path = os.path.join(paths.BASE_DIR, "output", self.material_name)
+        if not self.output_path or self.output_path == f"{paths.BASE_DIR}/output/{self.material_name}":
+            self.output_path = os.path.join(paths.BASE_DIR, "output", self.material_name)
+        
         self.temporal_path = os.path.join(self.output_path, "temp")
         self.textures_path = os.path.join(self.output_path, "textures")
 
