@@ -66,6 +66,7 @@ class mapsMaterialGenerator():
     def create_diffuseMap(self, image_path):
         if True:
             print("Starting bk sending texture generation")
+            bk.loadIfNotLoaded(self.config)
             output = bk._generate_texture(self.config, image_path)
             out_file = output.get("output_path", "")            
             return out_file

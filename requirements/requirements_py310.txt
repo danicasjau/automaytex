@@ -1,9 +1,8 @@
---index-url https://download.pytorch.org/whl/cu124
+--index-url https://download.pytorch.org/whl/cpu
 
-torch==2.6.0+cu124
-torchvision==0.21.0+cu124
-torchaudio==2.6.0+cu124
-
+torch==2.6.0+cpu
+torchvision==0.21.0+cpu
+torchaudio==2.6.0+cpu
 
 absl-py==2.4.0
 accelerate==1.13.0
@@ -58,7 +57,6 @@ numpy==2.4.4
 opencv-python==4.13.0.92
 OpenEXR==3.4.10
 
-
 packaging==26.1
 pillow==12.2.0
 platformdirs==4.9.6
@@ -80,7 +78,6 @@ regex==2026.4.4
 requests==2.33.1
 rich==15.0.0
 
-
 safetensors==0.7.0
 scikit-image==0.26.0
 scipy
@@ -94,7 +91,6 @@ tb-nightly==2.21.0a20251023
 tensorboard-data-server==0.7.2
 tifffile
 tokenizers==0.22.2
-
 
 tqdm==4.67.3
 transformers==5.5.4

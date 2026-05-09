@@ -5,9 +5,7 @@
 ## IMPORTING LIBRARIES
 ################################################
 
-import json
 import os
-import sys
 import re
 import glob
 import subprocess
@@ -18,60 +16,27 @@ import importlib
 ################################################
 
 try:
-    import maya.cmds as cmds            # type: ignore
-    import maya.mel as mel              # type: ignore
-    import maya.OpenMaya as om          # type: ignore
+    import maya.cmds as cmds # type: ignore
 except ImportError:
-    print("""
-    [Warning] Maya cmds module not found. This script should be run inside Maya's Python environment.
-    Exiting...
-    """)
-
-################################################
-## SETTING UP CONFIGURATION from CONFIGURATION FILE
-################################################
-
-_BASE_PATH = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex"
-_CONFIG_PATH = os.path.join(_BASE_PATH, "data", "configuration.json")
-
-_config_data = {}
-try:
-    with open(_CONFIG_PATH, "r") as _f:
-        _config_data = json.load(_f)
-except Exception as e:
-    print(f"Error loading configuration.json: {e}")
-
-# Set environment variables for the pipeline
-os.environ["BASE_DIR"] = str(_config_data.get("BASE_DIR", ""))
-os.environ["ENV_PATH"] = str(_config_data.get("ENV_PATH", ""))
-os.environ["SCRIPTS_PATH"] = str(_config_data.get("SCRIPTS_PATH", ""))
-os.environ["MODELS_PATH"] = str(_config_data.get("MODELS_PATH", ""))
-
-sys.path.append(_BASE_PATH)
-sys.path.append(os.path.join(_config_data.get("ENV_PATH", ""), "lib", "site-packages"))
-
-import config as conf
-
-_general_configuration = conf.configuration()
-
+    print("[Warning] Maya cmds module not found. This script should be run inside Maya's Python environment.")
 
 ################################################
 ## IMPORTING PIPELINES
 ################################################
 
 import mPipline.geoExtraction.geometryRenderer
-
 import mPipline.geoExtractionSix.geoPlanarRenderer
 
 import mPipline.exrCollage.exrCollageGenerator
 import mPipline.exrCollage.exrCollageBroker
 
 import mPipline.mtlMaya.materialCreation
-
 import mPipline.uvUtils.reUvPorjection
 
 import mPipline.mtlMaya.mtlMaterialMapsCreation
 import mlGui
+import config as conf
+import backServer
 
 ################################################
 ## RELOADING PIPELINES FOR DEVELOPING
@@ -92,6 +57,8 @@ def maya_remiport_libs():
     importlib.reload(mPipline.mtlMaya.mtlMaterialMapsCreation)
     importlib.reload(mlGui)
 
+    importlib.reload(backServer)
+
 maya_remiport_libs()
 
 ################################################
@@ -105,27 +72,32 @@ from mPipline.exrCollage.exrCollageGenerator import EXRCollageGenerator
 from mPipline.exrCollage.exrCollageBroker import CollageSplitter
 
 from mPipline.mtlMaya.materialCreation import autoMaMaterial
-
 from mPipline.uvUtils.reUvPorjection import UVRetargetTool
-
 from mPipline.mtlMaya.mtlMaterialMapsCreation import mapsMaterialGenerator
 
 import mlGui as mayagui
-
+import backServer as bk
 
 ################################################
 ## MAIN PIPELINE CLASS
 ################################################
 
 class autoTexturePipeline:
-    def __init__(self, _configuration=None):
-        if _configuration is None:
-            _configuration = _general_configuration
-            
+    def __init__(self, _configuration=None, progress_callback=None):
         self.config = _configuration
+        self.progress_callback = progress_callback
 
         # maya selection
         self.selection = cmds.ls(sl=True, long=True)
+        
+        if not self.selection:
+            cmds.confirmDialog(
+                title='No Selection in Maya',
+                message='No object selected in Maya. Please, select a mesh and try again.',
+                button=['OK'],
+                defaultButton='OK',
+                icon='critical'
+            )
 
         ################################
         ## PIPELINE DEBUG FLAGS
@@ -138,10 +110,7 @@ class autoTexturePipeline:
 
         self.set_tools()
 
-
     def set_tools(self):
-        print("\n--- Setting tools ---")
-
         ################################
         ## INITIALIZING PIPELINE OBJECTS
         ################################
@@ -156,30 +125,15 @@ class autoTexturePipeline:
                 config=self.config
             )
 
+        else:
+            self.extractor = MeshRenderer(
+                config=self.config
+            )
 
         self.retarget_tool = UVRetargetTool(
             self.selection[0], 
             config=self.config
         )
-        
-        """
-        self.face_images = [
-            os.path.join(self.config.temporal_path, f"{face}.exr") 
-            for face in self.config.face_order
-        ]
-        
-        self.prep = EXRCollageGenerator(
-            image_paths=self.face_images,
-            save_path=self.config.output_path,
-            depth_saturation=self.config.depth_saturation,
-            resize_to=self.config.resolution
-        )
-        
-        # self.uv_projector = GeoPlanarUVProjection(
-        #     config=self.config
-        # )
-        
-        """
 
     # ===== 2. Helper Methods =====
 
@@ -199,14 +153,14 @@ class autoTexturePipeline:
             rows = 2
         
         splitter = CollageSplitter(
-            collage_path=collage_path,
-            material_name=f"{name}_source",
-            output_root=self.config.output_path,
-            output_size=self.config.resolution,
-            face_order    = FACE_ORDER,
-            udim_start    = UDIM_START,
-            cols          = cols,
-            rows          = rows,
+            collage_path = collage_path,
+            material_name = f"{name}_source",
+            output_root = self.config.output_path,
+            output_size = self.config.resolution,
+            face_order = FACE_ORDER,
+            udim_start = UDIM_START,
+            cols = cols,
+            rows = rows,
         )
 
         tiles = splitter.run()
@@ -336,6 +290,12 @@ class autoTexturePipeline:
         mat_creator.connectImages(image_dict, udim=True)
         mat_creator.assign_to_object()
 
+
+
+    def update_progress(self, value):
+        if self.progress_callback:
+            self.progress_callback(value)
+
     def run(self):
         ##########################################
         ## PIPELINE EXECUTION
@@ -356,12 +316,15 @@ class autoTexturePipeline:
         ## NORMAL BAKING - MESH RENDERING
         ##########################################
         print("\n --- 1. Baking EXRs ---")
+        self.update_progress(10)
         if self.debug_renderImages:
             self.extractor.renderMesh()
 
+        self.update_progress(30)
         extraction_output = self.extractor.getOutputs()
         print("\n [INFO] Rendered tiles EXRs: ", extraction_output)
         self.retarget_tool.createPlanarUV(method=self.config.renderMode) # --> sets planarUV map for retargeting
+        self.update_progress(40)
 
         ##########################################
         ## DIFFUSION MODEL
@@ -371,6 +334,7 @@ class autoTexturePipeline:
             diffuse_files = self.generate_diffuse_textures(normal_tiles)
         else:
             diffuse_files = extraction_output.get("rgba")
+        self.update_progress(60)
 
         ##########################################
         ## DIFFUSION RETARGETING FOR CLEANING
@@ -383,15 +347,14 @@ class autoTexturePipeline:
         ## NORMAL RETARGETING FOR CLEANING
         ##########################################
 
-
         print("\n --- 3. Retargeting Normals for cleaning ---")
         normal_path = extraction_output.get("normals")
         print("Before retargeting: ", normal_path)
         normal_tiles = self.retarget_collage(normal_path, name="normal")
         print("\n [INFO] Retargeted normal tiles: ", normal_tiles)
+        self.update_progress(80)
 
         # setting up planar UVs for the extraction
-        
         
         ###########################################
         ## SET MATERIAL MAYA
@@ -404,41 +367,9 @@ class autoTexturePipeline:
         mtl = mapsMaterialGenerator(self.config.generated_images, diffuse_files[0], normal_tiles[0], self.config.textures_path, self.config)
         mtl.create()
         self.assign_material(mtl.getFiles())
+
+        self.update_progress(100)
         print("\n====== Pipeline Complete ======")
-
-        """
-        self.setup_uvs()
-
-        outputs = self.create_collages()
-        normal_path = outputs.get("normals")
-        print(outputs)
-
-        print("normal path", normal_path)
-        
-        normal_tiles = self.retarget_normal(normal_path)
-
-        diffuse_files = self.generate_diffuse_textures(normal_tiles)
-
-        print("\nGENERATION COMPLEATED: diffuse_files:", diffuse_files)
-
-        # fixed_files = self.apply_seam_fixing(diffuse_files)
-
-        upscaled_files = self.upscale_textures(diffuse_files)
-
-        mtl = mapsMaterialGenerator(upscaled_files[0], normal_tiles[0])
-        mtl.setOutputPath(self.config.output_path)
-        mtl.create()
-
-
-        self.assign_material(mtl.getFiles())
-       
-        print("\n====== Pipeline Complete ======")
-        print(f"Final UDIM Tiles: {len(diffuse_files)}")
-
-        for f in diffuse_files:
-            print(f"  -> {os.path.basename(f)}") """
-
-
 
 # ============================================
 # AUTO PIPELINE EXECUTION
@@ -452,8 +383,11 @@ def start_gui():
 
 def start_pipeline(_configuration=None):
     print(f"Starting configuration: with following data: {_configuration}")
-    # pipeline = autoTexturePipeline(_configuration)
-    # pipeline.run()
+    
+
+
+    pipeline = autoTexturePipeline(_configuration)
+    pipeline.run()
 
 
 if __name__ == "__main__":

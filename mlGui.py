@@ -6,34 +6,29 @@
 import sys
 import os
 import psutil
-import ctypes
 
 ## PYSIDE IMPORTS
 
 try:
-    from PySide6.QtWidgets import (
+    from PySide6.QtWidgets import ( # type: ignore
         QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
         QLabel, QLineEdit, QPushButton, QComboBox, QSlider, QCheckBox,
         QFrame, QFileDialog, QSpinBox, QTextEdit, QToolButton, QSizePolicy, 
-        QProgressBar
+        QProgressBar, QMessageBox
     )
-    from PySide6.QtCore import Qt, QTimer, Signal, QSize
-    from PySide6.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QIcon
+    from PySide6.QtCore import Qt, QTimer, Signal, QSize # type: ignore
+    from PySide6.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QIcon # type: ignore
 except ImportError:
     from PySide2.QtWidgets import (  # type: ignore
         QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
         QLabel, QLineEdit, QPushButton, QComboBox, QSlider, QCheckBox,
-        QFrame, QFileDialog, QSpinBox, QTextEdit, QToolButton, QSizePolicy
+        QFrame, QFileDialog, QSpinBox, QTextEdit, QToolButton, QSizePolicy, 
+        QProgressBar,QMessageBox
     )
     from PySide2.QtCore import Qt, QTimer, Signal  # type: ignore
     from PySide2.QtGui import QFont, QColor, QPainter, QPen, QPixmap, QIcon  # type: ignore
 
-
-## PIPELINE IMPORTS
-from config import configuration
-import backServer as bk
-import advancedsettings
-
+import mlGuiAdvanced
 
 # -----------------------------
 # MAIN GUI CLASS
@@ -54,7 +49,8 @@ class automaytexGUI(QMainWindow):
         self.server_process = None
 
         # Create a single persistent AdvancedSettings instance
-        self.adv = advancedsettings.AdvancedSettings()
+        self.adv = mlGuiAdvanced.AdvancedSettings()
+        self.adv.main_gui_extract_func = self.extract_generation_settings
         
         self.populate()
 
@@ -181,6 +177,13 @@ class automaytexGUI(QMainWindow):
 
         self._add_separator(layout)
         
+        # Tips Label
+        self.tips_label = QLabel("")
+        self.tips_label.setStyleSheet("color: #e6b800; font-weight: bold; font-size: 12px; background-color: #333333; padding: 5px; border-radius: 3px;")
+        self.tips_label.setWordWrap(True)
+        self.tips_label.setVisible(False)
+        layout.addWidget(self.tips_label)
+
 
         # material name
         inputlayout = QHBoxLayout()
@@ -235,7 +238,14 @@ class automaytexGUI(QMainWindow):
 
         # Separator after title
         self._add_separator(layout)
-                
+
+        layout.addWidget(QLabel(">>> Positive Prompt"))
+        self.prompt_input = QTextEdit()
+        self.prompt_input.setPlaceholderText("Enter texture prompt...")
+        layout.addWidget(self.prompt_input)    
+
+        self._add_separator(layout)
+
         self.model_settings = self._create_settings_header(name="MODEL SETTINGS", layout=layout)
         # Implementation
 
@@ -243,7 +253,8 @@ class automaytexGUI(QMainWindow):
         hlay = QHBoxLayout()
         hlay.addWidget(QLabel(starttex + "Model Type"))
         self.model_combo = QComboBox()
-        self.model_combo.addItems(["sdxl", "fast_sdxl", "sd1.5", "flux"])
+        self.model_combo.addItems(["sdxl", "fast_sdxl"])
+        self.model_combo.currentIndexChanged.connect(self._update_tips)
         hlay.addWidget(self.model_combo)
         self.model_settings.addLayout(hlay)
 
@@ -277,16 +288,13 @@ class automaytexGUI(QMainWindow):
         self.rif_slider, self.rif_entry = self.create_slider_entry("Reference semblance Scale", min_v=1, max_v=30, default_v=10, divisor=10.0, box=self.fast_settings_vbox)
         self.noise_slider, self.noise_entry = self.create_slider_entry("Noise", min_v=0, max_v=100, default_v=0, divisor=100.0, box=self.fast_settings_vbox)
 
-
         # Separator before generated images
         self._add_separator(layout)
         
-
-
         # Material Type
         layout.addWidget(QLabel(">>> Texture size: "))
         self.texture_combo = QComboBox()
-        self.texture_combo.addItems(["512", "1024", "2048", "4096", "8192"])
+        self.texture_combo.addItems(["1024", "2048", "4096"])
         layout.addWidget(self.texture_combo)
 
 
@@ -297,7 +305,7 @@ class automaytexGUI(QMainWindow):
         self.progress.setFixedHeight(20)
         self.progress.setStyleSheet("QProgressBar { border-radius: 4px; text-align: center; } "
                           "QProgressBar::chunk { background-color: #d67129; border-radius: 4px; }")
-        self.progress.setValue(100)
+        self.progress.setValue(0)
         layout.addWidget(self.progress)
 
         
@@ -323,9 +331,26 @@ class automaytexGUI(QMainWindow):
     
     def show_advanced_settings(self):
         """Show the persistent AdvancedSettings dialog."""
+        # Sync current main GUI settings to advanced panel
+        dConf = self.extract_generation_settings()
+        self.adv.sync_from_main_gui(dConf)
+        
         self.adv.show()
         self.adv.raise_()
         self.adv.activateWindow()
+
+    def update_progress(self, value):
+        """Update the progress bar value."""
+        self.progress.setValue(value)
+        QApplication.processEvents()
+
+    def show_finish_message(self):
+        """Show a success message box."""
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Automaytex | Done")
+        msg.setText(f"Texture generation completed successfully! \n Files located at: {os.path.join(self.save_path_input.text(), 'textures')}")
+        msg.setIcon(QMessageBox.Information)
+        msg.exec()
 
 
     def _create_settings_panel(self):
@@ -443,15 +468,27 @@ class automaytexGUI(QMainWindow):
             return "System info unavailable"
     
     def _on_texturize(self):
+        self.update_progress(0)
         settings = self.extract_generation_settings()
 
         self.texturize_signal.emit(settings)
+        self.update_progress(100)
+        #self.show_finish_message()
 
     def extract_generation_settings(self):
-        dConf = self.adv.extract_generation_settings()
+        dConf = self.adv.extract_maya_settings()
+
+        # --- Combine prompts ---
+        user_prompt = self.prompt_input.toPlainText().strip() if hasattr(self, 'prompt_input') else ""
+        general_prompt = dConf.positive_prompt.strip() if dConf.positive_prompt else ""
+        
+        if user_prompt and general_prompt:
+            dConf.positive_prompt = f"{user_prompt}, {general_prompt}"
+        elif user_prompt:
+            dConf.positive_prompt = user_prompt
+        # Else, it keeps the general_prompt as the positive prompt
 
         # --- Override with main GUI values ---
-        dConf.positive_prompt   = self.prompt_input.toPlainText() if hasattr(self, 'prompt_input') and self.prompt_input.toPlainText() else dConf.positive_prompt
         dConf.texture_resolution = self.texture_combo.currentText()
         dConf.inference_steps   = self.steps_slider.value()
         dConf.cfg_scale         = self.cfg_slider.value() / 10.0
@@ -461,7 +498,10 @@ class automaytexGUI(QMainWindow):
         quant_text              = self.quant_combo.currentText()
         dConf.quantization      = quant_text if quant_text != "None" else None
         dConf.material_name     = self.material_name_input.text()
-        dConf.output_path       = self.save_path_input.text() if self.save_path_input.text() else dConf.output_path
+        output_path_folder      = self.save_path_input.text() if self.save_path_input.text() else dConf.output_path
+        dConf.output_path       = os.path.join(output_path_folder, dConf.material_name)
+
+        print("Output path set to: ", dConf.output_path)
 
         dConf.generated_images = []
         if self.diffuse_check.isChecked():   dConf.generated_images.append("diffuse")
@@ -475,11 +515,15 @@ class automaytexGUI(QMainWindow):
         dConf.pathsetter()
         return dConf
 
+    def _update_tips(self):
+        if self.model_combo.currentText() == "fast_sdxl":
+            self.tips_label.setText("Tip: Recommended steps: 4 and CFG 2.0")
+            self.tips_label.setVisible(True)
+        else:
+            self.tips_label.setVisible(False)
+
 def main():
     app = QApplication(sys.argv)
     window = automaytexGUI()
     window.show()
     sys.exit(app.exec())
-
-if __name__ == "__main__":
-    main()

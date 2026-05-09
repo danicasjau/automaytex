@@ -3,6 +3,7 @@
 /output
 /temp
 /_deleted
+/_difversion
 /models
 */__pycache__
 *.pyc

@@ -1,70 +1,50 @@
 ###############################################
-## IMPORTING LIBRARIES
+## IMPORTING GENERAL LIBRARIES
 ################################################
 
-import json
-import os
-import sys
 import importlib
+import maya.api.OpenMaya as om # type:ignore
+import maya.cmds as cmds # type:ignore
 
-################################################
-## SETTING UP CONFIGURATION from CONFIGURATION FILE
-################################################
-
-_BASE_PATH = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex"
-_CONFIG_PATH = os.path.join(_BASE_PATH, "data", "configuration.json")
-
-_config_data = {}
 try:
-    with open(_CONFIG_PATH, "r") as _f:
-        _config_data = json.load(_f)
-except Exception as e:
-    print(f"Error loading configuration.json: {e}")
+    ################################################
+    ## IMPORTING PIPELINES
+    ################################################
 
-# Set environment variables for the pipeline
-os.environ["BASE_DIR"] = str(_config_data.get("BASE_DIR", ""))
-os.environ["ENV_PATH"] = str(_config_data.get("ENV_PATH", ""))
-os.environ["SCRIPTS_PATH"] = str(_config_data.get("SCRIPTS_PATH", ""))
-os.environ["MODELS_PATH"] = str(_config_data.get("MODELS_PATH", ""))
+    import mPipline.geoExtraction.geometryRenderer
+    import mPipline.geoExtractionSix.geoPlanarRenderer
 
-sys.path.append(_BASE_PATH)
-sys.path.append(os.path.join(_config_data.get("ENV_PATH", ""), "lib", "site-packages"))
+    import mPipline.exrCollage.exrCollageGenerator
+    import mPipline.exrCollage.exrCollageBroker
 
-import config as conf
+    import mPipline.mtlMaya.materialCreation
+    import mPipline.uvUtils.reUvPorjection
+    import mPipline.mtlMaya.mtlMaterialMapsCreation
 
-_general_configuration = conf.configuration()
+    import mlGuiAdvanced
 
+    import mlGui as mayagui
+    import backServer
+    import texPipeline
 
-# RELOAD
-
-
-################################################
-## IMPORTING PIPELINES
-################################################
-
-import mPipline.geoExtraction.geometryRenderer
-
-import mPipline.geoExtractionSix.geoPlanarRenderer
-
-import mPipline.exrCollage.exrCollageGenerator
-import mPipline.exrCollage.exrCollageBroker
-
-import mPipline.mtlMaya.materialCreation
-import mPipline.uvUtils.reUvPorjection
-import mPipline.mtlMaya.mtlMaterialMapsCreation
-
-import advancedsettings
-
-import mlGui
-import backServer
+    print("All libraries imported successfully.")
+except ImportError as e :
+    print(f"[ERROR] Unable to start automaytex gui. \n Error occurred:\n{str(e)}")
+    cmds.confirmDialog(
+        title='Module AUTOMAAYTEX not found!', 
+        message=f'Unable to start automaytex gui. \n\n Error occurred:\n{str(e)}', 
+        button=['OK'], 
+        defaultButton='OK', 
+        icon='critical'
+    )
+    # Also log it to the Script Editor / Status Bar
+    om.MGlobal.displayError(f"API Error: {str(e)}")
 
 ################################################
 ## RELOADING PIPELINES FOR DEVELOPING
 ################################################
 
 def maya_remiport_libs():
-    importlib.reload(conf)
-    
     importlib.reload(mPipline.geoExtraction.geometryRenderer)
     importlib.reload(mPipline.geoExtractionSix.geoPlanarRenderer)
 
@@ -75,29 +55,20 @@ def maya_remiport_libs():
     importlib.reload(mPipline.uvUtils.reUvPorjection)
     importlib.reload(mPipline.mtlMaya.mtlMaterialMapsCreation)
 
-    importlib.reload(mlGui)
+    importlib.reload(mayagui)
     importlib.reload(backServer)
 
     importlib.reload(mPipline.geoExtractionSix.geoPlanarExtraction)
     importlib.reload(mPipline.geoExtractionSix.geoPlanarReProjectUV)
     importlib.reload(mPipline.geoExtractionSix.geoPlanarRenderer)
-    importlib.reload(advancedsettings)
+    importlib.reload(mlGuiAdvanced)
+    importlib.reload(texPipeline)
 
 maya_remiport_libs()
 
-
 ################################################
-## IMPORTING PIPELINES
+## AUTOMAYTEX PIPELINE EXECUTION
 ################################################
-
-import mlGui
-import autotex
-
-importlib.reload(mlGui)
-importlib.reload(autotex)
-
-import mlGui as mayagui
-import autotex
 
 # Keep a global reference to the window so it isn't garbage collected by Maya
 _automaytex_window = None
@@ -111,9 +82,9 @@ def start_gui():
 
 def start_pipeline(_configuration=None):
     print(f"Starting pipeline with following data: {_configuration.printdata()}")
-    pipeline = autotex.autoTexturePipeline(_configuration)
+    # Use the progress update method from the global window
+    progress_cb = _automaytex_window.update_progress if _automaytex_window else None
+    pipeline = texPipeline.autoTexturePipeline(_configuration, progress_callback=progress_cb)
     pipeline.run()
 
-
-if __name__ == "__main__":
-    start_gui()
+start_gui()

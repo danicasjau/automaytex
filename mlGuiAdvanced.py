@@ -1,39 +1,38 @@
 
 
-import sys
+""" IMPORTING LIBRARIES """
+
 import os
 
 try:
-    from PySide6.QtWidgets import (
-        QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    from PySide6.QtWidgets import ( # type: ignore
+        QApplication, QWidget, QVBoxLayout, QHBoxLayout,
         QLabel, QLineEdit, QPushButton, QComboBox, QSlider, QCheckBox,
-        QFrame, QFileDialog, QSpinBox, QTextEdit, QToolButton, QSizePolicy, 
-        QProgressBar, QListWidget, QStackedWidget, QDialog, QScrollArea, QGroupBox, QDoubleSpinBox
+        QFrame, QFileDialog, QTextEdit,
+        QProgressBar, QListWidget, QStackedWidget, QDialog, QDoubleSpinBox
     )
-
-    from PySide6.QtCore import Qt, QTimer, Signal, QSize
-    from PySide6.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QIcon
+    from PySide6.QtCore import Qt, QTimer, Signal, QSize # type: ignore
+    from PySide6.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QIcon # type: ignore
 
 except ImportError:
     from PySide2.QtWidgets import (  # type: ignore
-        QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+        QApplication, QWidget, QVBoxLayout, QHBoxLayout,
         QLabel, QLineEdit, QPushButton, QComboBox, QSlider, QCheckBox,
-        QFrame, QFileDialog, QSpinBox, QTextEdit, QToolButton, QSizePolicy,
+        QFrame, QFileDialog, QTextEdit,
         QProgressBar, QListWidget, QStackedWidget, QDialog
     )
-
     from PySide2.QtCore import Qt, QTimer, Signal  # type: ignore
     from PySide2.QtGui import QFont, QColor, QPainter, QPen, QPixmap, QIcon  # type: ignore
-
 
 import psutil
 import ctypes
 import backServer as bk
+
 import importlib
 import importlib.util
-import platform
 import json
-from config import configuration, paths
+
+from config import configuration
 
 class AdvancedSettings(QDialog):
     def __init__(self):
@@ -46,8 +45,12 @@ class AdvancedSettings(QDialog):
         # Load model paths from models.json
         self._load_model_paths_from_json()
 
-        # Main Layout: Sidebar on left, Content on right
-        main_layout = QHBoxLayout(self)
+        # Main Layout
+        self.main_vlayout = QVBoxLayout(self)
+
+        # Top section: Sidebar on left, Content on right
+        self.top_hlayout = QHBoxLayout()
+        self.main_vlayout.addLayout(self.top_hlayout)
 
         # 1. Sidebar
         self.sidebar = QListWidget()
@@ -70,8 +73,15 @@ class AdvancedSettings(QDialog):
         self.stack.addWidget(self.panel_system)
         self.stack.addWidget(self.panel_generation)
 
-        main_layout.addWidget(self.sidebar)
-        main_layout.addWidget(self.stack)
+        self.top_hlayout.addWidget(self.sidebar)
+        self.top_hlayout.addWidget(self.stack)
+
+        # 3. Bottom section: Save Button
+        self.save_btn = QPushButton("Save and Close")
+        self.save_btn.setFixedHeight(35)
+        self.save_btn.setStyleSheet("font-weight: bold; background-color: #444; border-radius: 5px;")
+        self.save_btn.clicked.connect(self.accept)
+        self.main_vlayout.addWidget(self.save_btn)
         
         self.sidebar.setCurrentRow(0)  # Start on Maya
 
@@ -98,7 +108,8 @@ class AdvancedSettings(QDialog):
         render_row.addWidget(QLabel("Render Type:"))
         self.render_combo = QComboBox()
         # Fixed spelling of tetrahedral
-        self.render_combo.addItems(["tetrahedral", "cube", "maya-bake"]) 
+        self.render_combo.addItems(["thetredral"]) # , "cube", "maya-bake"
+        self.render_combo.setCurrentText("thetredral")
         render_row.addWidget(self.render_combo)
         main_layout.addLayout(render_row)
 
@@ -284,11 +295,7 @@ class AdvancedSettings(QDialog):
         # self.open_server_console.clicked.connect(self.open_server_console)
         layout.addWidget(self.open_server_console)
 
-        
-
         layout.addStretch()
-
-
 
         # --------------------------------------
         # SERVER CONTROL BOX
@@ -413,9 +420,8 @@ class AdvancedSettings(QDialog):
         layout.addWidget(self.graph)
 
         # Timer
-        self.timer = QTimer()
+        self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_usage)
-        self.timer.start(100)
 
         self.info_layout = QVBoxLayout()
         self.info_layout.setSpacing(6)
@@ -439,6 +445,16 @@ class AdvancedSettings(QDialog):
         layout.addStretch()
 
         return panel
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if hasattr(self, 'timer'):
+            self.timer.start(100)
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        if hasattr(self, 'timer'):
+            self.timer.stop()
 
     ###############################
     ## UTILS
@@ -518,29 +534,29 @@ class AdvancedSettings(QDialog):
         self.assign_maya_check.setChecked(d.assign_maya_material)
 
         # Generation panel
-        if hasattr(self, 'prompt_input'):
-            self.prompt_input.setPlainText(d.positive_prompt.strip())
         if hasattr(self, 'n_prompt_input'):
             self.n_prompt_input.setPlainText(d.negative_prompt.strip())
 
-    def extract_generation_settings(self):
+    def sync_from_main_gui(self, dConf):
+        """Update widgets with values from the main GUI configuration."""
+        # The main GUI prompt should not overwrite the general definer prompt.
+        pass
 
-        """Build and return a configuration() object from the current GUI state."""
+    def extract_maya_settings(self):
         dConf = configuration()
-
         # --- Maya panel ---
-        dConf.renderMode        = self.render_combo.currentText()
-        dConf.material_type     = self.material_combo.currentText()
-        dConf.camera_scale      = self.camera_scale_spin.value()
-        dConf.uv_chunk_size     = self.uv_chunk_spin.value()
+        dConf.renderMode = self.render_combo.currentText()
+        dConf.material_type = self.material_combo.currentText()
+        dConf.camera_scale = self.camera_scale_spin.value()
+        dConf.uv_chunk_size = self.uv_chunk_spin.value()
         dConf.seam_fixer_strength = self.seam_strength.value()
-        dConf.seam_fixer_steps  = int(self.seam_steps.value())
-        dConf.retargetUV        = self.retarget_uv_check.isChecked()
+        dConf.seam_fixer_steps = int(self.seam_steps.value())
+        dConf.retargetUV = self.retarget_uv_check.isChecked()
         dConf.assign_maya_material = self.assign_maya_check.isChecked()
 
         # Bake render size (two dropdowns)
         try:
-            dConf.bake_render_width  = int(self.render_size_width_combo.currentText())
+            dConf.bake_render_width = int(self.render_size_width_combo.currentText())
             dConf.bake_render_height = int(self.render_size_height_combo.currentText())
         except ValueError:
             pass
@@ -572,8 +588,13 @@ class AdvancedSettings(QDialog):
         ram_total = v.total / (1024**3)
         ram_percent = v.percent
 
-        self.ram_square.set_value(ram_percent)
-        self.ram_label.setText(f"RAM: {ram_used:.1f} / {ram_total:.1f} GB")
+        try:
+            self.ram_square.set_value(ram_percent)
+            self.ram_label.setText(f"RAM: {ram_used:.1f} / {ram_total:.1f} GB")
+        except RuntimeError:
+            if hasattr(self, 'timer'):
+                self.timer.stop()
+            return
 
         # -------------------------------
         # VRAM (GPU)
@@ -581,8 +602,12 @@ class AdvancedSettings(QDialog):
         vram_used, vram_total = get_nvml_vram()
         vram_percent = (vram_used / vram_total * 100) if vram_total > 0 else 0
 
-        self.vram_square.set_value(vram_percent)
-        self.vram_label.setText(f"VRAM: {vram_used / 1024:.1f} / {vram_total / 1024:.1f} GB")
+        try:
+            self.vram_square.set_value(vram_percent)
+            self.vram_label.setText(f"VRAM: {vram_used / 1024:.1f} / {vram_total / 1024:.1f} GB")
+        except RuntimeError:
+            if hasattr(self, 'timer'):
+                self.timer.stop()
 
     
     # EXTERNAL LIB CALL
@@ -616,22 +641,26 @@ class AdvancedSettings(QDialog):
 
     def refresh_system_data(self):
         # 2. GPU & CUDA Info (via Torch if available)
+        """
         torch_version = self.get_lib_version("torch")
         if torch_version != "Not Found":
-            import torch
-            cuda_avail = torch.cuda.is_available()
-            self.add_info("CUDA Available", str(cuda_avail))
-            if cuda_avail:
-                self.add_info("GPU Device", torch.cuda.get_device_name(0))
-                self.add_info("CUDA Version", torch.version.cuda)
+            try:
+                import torch
+                cuda_avail = torch.cuda.is_available()
+                self.add_info("CUDA Available", str(cuda_avail))
+                if cuda_avail:
+                    self.add_info("GPU Device", torch.cuda.get_device_name(0))
+                    self.add_info("CUDA Version", torch.version.cuda)
+                
                 self.add_info("cuDNN Version", str(torch.backends.cudnn.version()))
-            else:
-                self.add_info("NVIDIA/CUDA", "No compatible GPU detected by Torch")
+            except Exception as e:
+                self.add_info("CUDA Error", str(e))
         else:
             self.add_info("Torch", "Not installed (cannot check GPU detailed stats)")
+        """
 
         # 3. AI Environment Libraries
-        self.add_info("PyTorch", torch_version)
+        # self.add_info("PyTorch", torch_version)
         self.add_info("Diffusers", self.get_lib_version("diffusers"))
         self.add_info("Transformers", self.get_lib_version("transformers"))
 
@@ -717,10 +746,6 @@ class AdvancedSettings(QDialog):
 ## SYSTEM UTILS
 #######################
 
-
-# -----------------------------
-# SQUARE USAGE BAR
-# -----------------------------
 class SquareUsage(QWidget):
     def __init__(self, color):
         super().__init__()
@@ -729,8 +754,11 @@ class SquareUsage(QWidget):
         self.setFixedSize(250, 40)
 
     def set_value(self, v):
-        self.value = max(0, min(v, 100))
-        self.update()
+        try:
+            self.value = max(0, min(v, 100))
+            self.update()
+        except RuntimeError:
+            pass
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -749,9 +777,8 @@ class MemoryGraph(QWidget):
         self.vram_history = []
 
         # 20 FPS timer
-        self.timer = QTimer()
+        self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_data)
-        self.timer.start(50)
 
     def update_data(self):
         ram = psutil.virtual_memory().percent
@@ -766,7 +793,21 @@ class MemoryGraph(QWidget):
             self.ram_history.pop(0)
             self.vram_history.pop(0)
 
-        self.update()
+        try:
+            self.update()
+        except RuntimeError:
+            if hasattr(self, 'timer'):
+                self.timer.stop()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if hasattr(self, 'timer'):
+            self.timer.start(50)
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        if hasattr(self, 'timer'):
+            self.timer.stop()
 
     def paintEvent(self, event):
         painter = QPainter(self)
