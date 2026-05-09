@@ -1,43 +1,22 @@
 # AutoMayTex
 
-**AI-driven automatic texture generation for Autodesk Maya.** AutoMayTex renders a mesh from multiple angles, feeds the renders into a Stable Diffusion XL ControlNet pipeline, and automatically applies the resulting PBR texture maps back onto the mesh.
+**Diffusion texture generation for Autodesk Maya.** 
+
+AutoMayTex renders a mesh (Depth and normal map) from multiple angles, feeds the renders into a Stable Diffusion XL ControlNet pipeline, and applies the resulting PBR texture maps back onto the mesh in maya.
 
 ---
 
 ## What It Does
 
-AutoMayTex takes a selected Maya mesh and runs a fully automated pipeline:
+AutoMayTex takes a selected Autodesk Maya mesh and runs an automated diffusion pipeline:
 
 1. **Geometry Rendering** — Renders the mesh from 4 tetrahedral viewpoints into EXR tiles (normals + depth + RGBA).
 2. **Collage Baking** — Tiles are packed into a 2×2 collage for efficient inference.
-3. **AI Texture Generation** — The collage is sent to a local FastAPI server running a Stable Diffusion XL ControlNet model. The model generates diffuse, roughness, metalness, normal, and height maps guided by your prompt.
+3. **Diffusion Generation** — The collage is sent to a local FastAPI server running a Stable Diffusion XL ControlNet model. The model generates diffuse, roughness, metalness, normal, and height maps guided by users prompt.
 4. **UV Retargeting** — Generated tiles are re-projected back onto the mesh's original UV layout using planar UV baking.
 5. **Material Assignment** — PBR maps are automatically wired into an Arnold/MaterialX/Standard Surface material and assigned to the object.
 
-Everything is orchestrated from a non-blocking PySide6 GUI embedded inside Maya, with a real-time progress bar. The AI inference runs in a separate Python venv to avoid conflicts with Maya's internal Python interpreter.
-
----
-
-## Pipeline Architecture
-
-```
-Maya Mesh
-    │
-    ▼
-[Geometry Renderer]          ← Tetrahedral camera rig, EXR output
-    │
-    ▼
-[EXR Collage Generator]      ← 2×2 tile collage
-    │
-    ▼
-[FastAPI Backend Server]     ← SDXL + ControlNet (Normal/Depth guided)
-    │   (port 8001, separate venv)
-    ▼
-[Diffusion Output]           ← diffuse / roughness / metalness / normal / height PNGs
-    │
-    ▼
-[UV Retarget + Material]     ← Re-projects tiles, creates & assigns Maya material
-```
+Everything is orchestrated from a PySide6 GUI inside Maya. The diffusion models inference runs in a separate Python venv to avoid conflicts with Maya's internal Python interpreter.
 
 The backend server (`server/server.py`) runs inside a dedicated Python virtual environment with PyTorch + Diffusers. Maya communicates with it over HTTP on `localhost:8001`. The server is started automatically by the plugin when needed.
 
@@ -51,7 +30,6 @@ AutoMayTex currently supports three SDXL-family base models:
 |---|---|---|
 | `sdxl` | Juggernaut XL v9 | High quality, photo-realistic textures |
 | `fast_sdxl` | SDXL Lightning 4-step | Fast previews — **recommended steps: 4, CFG: 2.0** |
-| `flash_sdxl` | SDXL Lightning 1-step | Ultra-fast generation |
 
 All models require a **ControlNet Union SDXL** model for normal-guided generation, and a **Depth Anything ViT-L14** model for depth estimation. Model paths are configured in `data/models.json`.
 
@@ -71,8 +49,6 @@ All models require a **ControlNet Union SDXL** model for normal-guided generatio
    - Registering the plug-in with Maya
 3. Open Maya → **Windows → Settings/Preferences → Plug-in Manager**
 4. Find `automayatex.py`, enable **Loaded** and **Auto load**.
-
-> Requires Git for Windows: https://git-scm.com/download/win
 
 ---
 
@@ -110,10 +86,10 @@ Create or edit `data/configuration.json` to set your paths:
 
 ```json
 {
-  "BASE_DIR": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex",
-  "ENV_PATH": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/mEnv",
-  "SCRIPTS_PATH": "...",
-  "MODELS_PATH": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/models"
+  "BASE_DIR": "./automaytex",
+  "ENV_PATH": "./mEnv",
+  "SCRIPTS_PATH": "./scripts",
+  "MODELS_PATH": "./models"
 }
 ```
 
@@ -125,11 +101,7 @@ Open the **Maya Script Editor** and run:
 
 ```python
 import maya.cmds as cmds
-
-# Load the plugin from its full path
-cmds.loadPlugin(r'D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\automaytex.py')
-
-# Launch the GUI
+cmds.loadPlugin(r'automaytex.py') # use path if not detected
 cmds.automaytex()
 ```
 
@@ -138,7 +110,7 @@ To **reload** the plugin during development:
 ```python
 import maya.cmds as cmds
 cmds.unloadPlugin('automaytex.py')
-cmds.loadPlugin(r'D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\automaytex.py')
+cmds.loadPlugin(r'automaytex.py')
 cmds.automaytex()
 ```
 
@@ -149,7 +121,7 @@ Instead of specifying the full path every time, add the plugin folder to Maya's 
 ```python
 import maya.cmds as cmds
 import os
-os.environ["MAYA_PLUG_IN_PATH"] = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex"
+os.environ["MAYA_PLUG_IN_PATH"] = r".\automaytex" # path to maya automaytex instalation folder
 ```
 
 Or set `MAYA_PLUG_IN_PATH` permanently as a Windows environment variable, then reload Maya and find `automaytex.py` in **Plug-in Manager**.
@@ -194,17 +166,17 @@ Open `data/models.json` to confirm paths are correct:
   "models": [
     {
       "name": "sdxl",
-      "installation_path": "E:/models/checkpoints/",
+      "installation_path": "./models/checkpoints/",
       "installation_name": "juggernautXL_v9Rdphoto2Lightning.safetensors"
     },
     {
       "name": "controlnet",
-      "installation_path": "E:/models/controlnet/",
+      "installation_path": "./models/controlnet/",
       "installation_name": "diffusion_pytorch_model_promaxx.safetensors"
     },
     {
       "name": "depth",
-      "installation_path": "D:/models/",
+      "installation_path": "./models/",
       "installation_name": "depth_anything_vitl14"
     }
   ]
@@ -239,4 +211,4 @@ Open `data/models.json` to confirm paths are correct:
 ## Credits
 
 AutoMayTex — v1.2.0  
-Daniel Casadevall Jauhiainen — La Salle, 2026
+Daniel Casadevall Jauhiainen, 2026
