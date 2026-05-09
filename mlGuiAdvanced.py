@@ -8,7 +8,7 @@ try:
     from PySide6.QtWidgets import ( # type: ignore
         QApplication, QWidget, QVBoxLayout, QHBoxLayout,
         QLabel, QLineEdit, QPushButton, QComboBox, QSlider, QCheckBox,
-        QFrame, QFileDialog, QTextEdit,
+        QFrame, QFileDialog, QTextEdit, QScrollArea,
         QProgressBar, QListWidget, QStackedWidget, QDialog, QDoubleSpinBox
     )
     from PySide6.QtCore import Qt, QTimer, Signal, QSize # type: ignore
@@ -324,44 +324,251 @@ class AdvancedSettings(QDialog):
 
     def create_models_panel(self):
         widget = QWidget()
-        layout = QVBoxLayout(widget)
-        
+        outer_layout = QVBoxLayout(widget)
+
         title_label = QLabel("MODELS CONFIGURATION")
         title_label.setStyleSheet("font-weight: bold; font-size: 14px; margin-bottom: 5px;")
-        layout.addWidget(title_label)
-
+        outer_layout.addWidget(title_label)
 
         # General Models Path
         gen_path_lay = QHBoxLayout()
-        gen_path_lay.addWidget(QLabel(f"{self.starttex} General Models Path: "))
+        gen_path_lay.addWidget(QLabel(f"{self.starttex} Default Install Path: "))
         self.gen_path_input = QLineEdit("C:/models")
         gen_path_lay.addWidget(self.gen_path_input)
-        btn_browse = QPushButton("...")
-        btn_browse.setFixedWidth(30)
-        gen_path_lay.addWidget(btn_browse)
-        layout.addLayout(gen_path_lay)
-        layout.addSpacing(30)
-        
-        # Model List
-        models = [
-            {"id": "sdxl", "file": "juggernautXL_v9.safetensors"},
-            {"id": "fast_sdxl", "file": "sdxl_lightning_4step.safetensors"},
-            {"id": "controlnet", "file": "diffusion_pytorch_model_promaxx.safetensors"},
-            {"id": "depth", "file": "depth_anything_vitl14.safetensors"}
-        ]
+        btn_browse_gen = QPushButton("...")
+        btn_browse_gen.setFixedWidth(30)
+        btn_browse_gen.clicked.connect(
+            lambda: self.gen_path_input.setText(
+                QFileDialog.getExistingDirectory(self, "Select Default Models Directory") or self.gen_path_input.text()
+            )
+        )
+        gen_path_lay.addWidget(btn_browse_gen)
+        outer_layout.addLayout(gen_path_lay)
+        outer_layout.addSpacing(8)
 
-        model_path = self.gen_path_input.text()
+        # Scrollable area for model rows
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll_widget = QWidget()
+        self._models_scroll_layout = QVBoxLayout(scroll_widget)
+        self._models_scroll_layout.setSpacing(12)
+        scroll.setWidget(scroll_widget)
+        outer_layout.addWidget(scroll, 1)
 
-        for m in models:
-            layout.addLayout(self.create_model_row(m['id'], m['file'], model_path))
-            layout.addSpacing(30)
+        # Store references for install-all and status refresh
+        self._model_row_widgets = {}   # model_id -> dict of row widgets
 
-        # Global Install
-        self.install_all = QPushButton("Install All")
-        self.install_all.setFixedWidth(100)
-        layout.addWidget(self.install_all, alignment=Qt.AlignRight)
-        layout.addStretch()
+        conf = configuration()
+        try:
+            with open(conf.models_json, "r") as f:
+                self._models_catalogue = json.load(f)
+        except Exception:
+            self._models_catalogue = {"models": []}
+
+        for entry in self._models_catalogue.get("models", []):
+            self._add_model_row(entry)
+
+        self._models_scroll_layout.addStretch()
+
+        # Install All button
+        btn_row = QHBoxLayout()
+        btn_row.addStretch()
+        self.install_all = QPushButton("Install All Missing")
+        self.install_all.setFixedHeight(30)
+        self.install_all.clicked.connect(self._install_all_models)
+        btn_row.addWidget(self.install_all)
+        outer_layout.addLayout(btn_row)
+
         return widget
+
+    def _add_model_row(self, entry):
+        """Build and add a single model row into the scroll layout."""
+        model_id   = entry.get("name", "unknown")
+        model_name = entry.get("model_name", model_id)
+        install_path = entry.get("installation_path", "")
+        install_name = entry.get("installation_name", "")
+        full_path    = os.path.join(install_path, install_name)
+        hf_url       = entry.get("hugging_face_url", "")
+
+        frame = QFrame()
+        frame.setFrameShape(QFrame.StyledPanel)
+        frame.setFrameShadow(QFrame.Raised)
+        row_layout = QVBoxLayout(frame)
+        row_layout.setContentsMargins(8, 6, 8, 6)
+        row_layout.setSpacing(4)
+
+        # Title + status
+        installed = os.path.exists(full_path)
+        status_color = "#4caf50" if installed else "#f44336"
+        status_text  = "✔ Installed" if installed else "✘ Not Found"
+
+        top_lay = QHBoxLayout()
+        name_lbl = QLabel(f"<b>{model_name}</b>  <small>({model_id})</small>")
+        status_lbl = QLabel(f"<b style='color:{status_color};'>{status_text}</b>")
+        top_lay.addWidget(name_lbl)
+        top_lay.addStretch()
+        top_lay.addWidget(status_lbl)
+        row_layout.addLayout(top_lay)
+
+        # HF URL (read-only display)
+        url_lbl = QLabel(f"<small><a href='{hf_url}'>{hf_url[:70]}{'...' if len(hf_url)>70 else ''}</a></small>")
+        url_lbl.setOpenExternalLinks(True)
+        row_layout.addWidget(url_lbl)
+
+        # Install path editor + browse
+        path_lay = QHBoxLayout()
+        path_lbl = QLabel("Install path:")
+        path_lbl.setFixedWidth(80)
+        path_input = QLineEdit(install_path)
+        path_btn = QPushButton("...")
+        path_btn.setFixedWidth(28)
+        path_btn.clicked.connect(
+            lambda _=None, pi=path_input: pi.setText(
+                QFileDialog.getExistingDirectory(self, "Select Installation Directory") or pi.text()
+            )
+        )
+        path_lay.addWidget(path_lbl)
+        path_lay.addWidget(path_input)
+        path_lay.addWidget(path_btn)
+        row_layout.addLayout(path_lay)
+
+        # Progress bar (hidden until download starts)
+        progress = QProgressBar()
+        progress.setRange(0, 100)
+        progress.setValue(0)
+        progress.setFixedHeight(14)
+        progress.setVisible(False)
+        row_layout.addWidget(progress)
+
+        # Install button
+        btn_lay = QHBoxLayout()
+        inst_btn = QPushButton("Install / Download")
+        inst_btn.setFixedHeight(26)
+        inst_btn.clicked.connect(
+            lambda _=None, e=entry, pi=path_input, pb=progress, sl=status_lbl:
+                self._install_model(e, pi, pb, sl)
+        )
+        btn_lay.addStretch()
+        btn_lay.addWidget(inst_btn)
+        row_layout.addLayout(btn_lay)
+
+        self._models_scroll_layout.addWidget(frame)
+        self._model_row_widgets[model_id] = {
+            "path_input": path_input,
+            "progress":   progress,
+            "status_lbl": status_lbl,
+            "entry":      entry,
+        }
+
+    def _install_model(self, entry, path_input, progress_bar, status_lbl):
+        """Download a single model file/folder into the user-specified path."""
+        import concurrent.futures
+        try:
+            from PySide6.QtWidgets import QApplication as _QApp  # type: ignore
+        except ImportError:
+            from PySide2.QtWidgets import QApplication as _QApp  # type: ignore
+
+        dest_dir  = path_input.text().strip() or entry.get("installation_path", "")
+        dest_name = entry.get("download_name", entry.get("installation_name", "model"))
+        hf_url    = entry.get("hugging_face_url", "")
+        model_id  = entry.get("name", "")
+
+        if not hf_url:
+            status_lbl.setText("<b style='color:#f44336;'>✘ No URL configured</b>")
+            return
+
+        # Detect HuggingFace tree URL → use snapshot_download
+        is_repo = "/tree/" in hf_url or hf_url.rstrip("/").endswith(dest_name) is False
+        dest_full = os.path.join(dest_dir, dest_name)
+
+        os.makedirs(dest_dir, exist_ok=True)
+
+        if os.path.exists(dest_full):
+            status_lbl.setText("<b style='color:#4caf50;'>✔ Installed</b>")
+            return
+
+        progress_bar.setVisible(True)
+        progress_bar.setValue(0)
+        status_lbl.setText("<b style='color:#e6b800;'>⬇ Downloading…</b>")
+        _QApp.processEvents()
+
+        error_holder = [None]
+
+        def _do_download():
+            try:
+                import requests as _req
+                if "/tree/" in hf_url:
+                    # Use HuggingFace Hub snapshot_download for repo trees
+                    try:
+                        from huggingface_hub import snapshot_download  # type: ignore
+                        repo_id = hf_url.split("huggingface.co/")[1].split("/tree/")[0]
+                        snapshot_download(repo_id=repo_id, local_dir=dest_full, local_dir_use_symlinks=False)
+                    except ImportError:
+                        error_holder[0] = "huggingface_hub not installed. Run: pip install huggingface_hub"
+                else:
+                    # Direct file download with streaming + progress
+                    resp = _req.get(hf_url, stream=True, timeout=120)
+                    resp.raise_for_status()
+                    total = int(resp.headers.get("content-length", 0))
+                    downloaded = 0
+                    with open(dest_full, "wb") as fh:
+                        for chunk in resp.iter_content(chunk_size=65536):
+                            fh.write(chunk)
+                            downloaded += len(chunk)
+                            if total > 0:
+                                pct = int(downloaded / total * 100)
+                                progress_bar.setValue(pct)
+                                _QApp.processEvents()
+            except Exception as ex:
+                error_holder[0] = str(ex)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+            future = ex.submit(_do_download)
+            while not future.done():
+                _QApp.processEvents()
+                import time; time.sleep(0.05)
+
+        if error_holder[0]:
+            status_lbl.setText(f"<b style='color:#f44336;'>✘ Error: {error_holder[0][:60]}</b>")
+            progress_bar.setVisible(False)
+            return
+
+        progress_bar.setValue(100)
+        status_lbl.setText("<b style='color:#4caf50;'>✔ Installed</b>")
+
+        # Persist the new path back into models.json
+        self._update_model_path_in_json(entry.get("name", ""), dest_dir)
+
+    def _install_all_models(self):
+        """Install every model that is not yet present on disk."""
+        for model_id, widgets in self._model_row_widgets.items():
+            e  = widgets["entry"]
+            pi = widgets["path_input"]
+            pb = widgets["progress"]
+            sl = widgets["status_lbl"]
+            dest_dir  = pi.text().strip() or e.get("installation_path", "")
+            dest_name = e.get("installation_name", "")
+            if not os.path.exists(os.path.join(dest_dir, dest_name)):
+                self._install_model(e, pi, pb, sl)
+
+    def _update_model_path_in_json(self, model_name: str, new_path: str):
+        """Persist the new installation_path for a model back to models.json."""
+        conf = configuration()
+        json_path = conf.models_json
+        try:
+            with open(json_path, "r") as f:
+                data = json.load(f)
+            for m in data.get("models", []):
+                if m.get("name") == model_name:
+                    m["installation_path"] = new_path
+                    break
+            with open(json_path, "w") as f:
+                json.dump(data, f, indent=4)
+            # Refresh our in-memory catalogue
+            self._load_model_paths_from_json()
+            print(f"[AdvancedSettings] Updated installation_path for '{model_name}' → {new_path}")
+        except Exception as e:
+            print(f"[AdvancedSettings] Could not update models.json: {e}")
 
     def create_system_panel(self):
         widget = QWidget()
@@ -460,44 +667,7 @@ class AdvancedSettings(QDialog):
     ## UTILS
     ###############################
 
-    def create_model_row(self, model_id, filename, modelpath):
-        row_layout = QVBoxLayout()
-        model_full_path = f"{modelpath}/{filename}"
-        
-        # Label and Status Check
-        status = "Already Installed" if self.check_installed(model_full_path) else "Not Found"
-        top_lay = QHBoxLayout()
-        top_lay.addWidget(QLabel(f"<b>{model_id.upper()}</b>"))
-        top_lay.addWidget(QLabel(f"<i>{status}</i>"))
-        row_layout.addLayout(top_lay)
 
-        # Controls
-        ctrl_lay = QHBoxLayout()
-        
-        custom_check = QCheckBox("Use Custom Path")
-        path_input = QLineEdit(self.gen_path_input.text())
-        path_input.setEnabled(False)
-        
-        # Toggle path input based on checkbox
-        custom_check.toggled.connect(lambda checked: path_input.setEnabled(checked))
-        
-        inst_btn = QPushButton("Install")
-        inst_btn.setFixedWidth(60)
-        
-        refind_button = QPushButton("ReFind")
-        refind_button.setFixedWidth(60)
-
-        ctrl_lay.addWidget(custom_check)
-        ctrl_lay.addWidget(path_input)
-        ctrl_lay.addWidget(inst_btn)
-        ctrl_lay.addWidget(refind_button)
-        
-        row_layout.addLayout(ctrl_lay)
-        return row_layout
-
-    def check_installed(self, full_path):
-        """Check if a model file exists at the given path."""
-        return os.path.exists(full_path)
 
     def _load_model_paths_from_json(self):
         """Load model installation paths from models.json on startup."""
