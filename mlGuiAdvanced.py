@@ -782,7 +782,7 @@ class AdvancedSettings(QDialog):
     
     # EXTERNAL LIB CALL
     def _load_models(self):
-        current_conf = self.extract_generation_settings()
+        current_conf = self.extract_maya_settings()
         bk._load_all_models(current_conf)
         print("Models loaded")
 

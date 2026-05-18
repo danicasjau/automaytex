@@ -138,23 +138,7 @@ def uninitializePlugin(mobject):
 ##########################################################
 
 """
-# example on how to load plugin maya 
-
 import maya.cmds as cmds
-cmds.loadPlugin(r'D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\automaytex.py')
-
-cmds.reloadPlugin(r'D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\automaytex.py')
-
-cmds.unloadPlugin(r'D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\automaytex.py')
-cmds.unloadPlugin('automaytex.py')
-
-
-import maya.cmds as cmds
-cmds.loadPlugin('automaytex.py')
-cmds.automaytex()
-
-
-
 cmds.unloadPlugin('automaytex.py')
 cmds.loadPlugin(r'D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\automaytex.py')
 cmds.automaytex()

@@ -171,9 +171,18 @@ class diffModels:
     # Load helpers
     # ------------------------------------------------------------------
     def _load_controlnet(self, path: str) -> ControlNetModel:
-        print(f"[cModels] Loading ControlNet from:\n  {path}")
+        # Convert to absolute path to ensure proper handling
+        abs_path = os.path.abspath(path)
+        
+        if not os.path.isfile(abs_path):
+            raise FileNotFoundError(
+                f"[cModels] ControlNet model not found at:\n  {abs_path}\n"
+                f"  (original path: {path})"
+            )
+        
+        print(f"[cModels] Loading ControlNet from:\n  {abs_path}")
         return ControlNetModel.from_single_file(
-            path,
+            abs_path,
             torch_dtype=self.dtype,
         )
 
