@@ -29,7 +29,13 @@ The backend server (`server/server.py`) runs inside a dedicated Python virtual e
 ## Examples
 
 ![Alternative text description](images/examples/automaytex_example02.png)
-https://github.com/danicasjau/automaytex./images/media/demovideo.mov
+
+
+
+
+https://github.com/user-attachments/assets/40cadb31-1cf1-4fbd-b2f8-e6a160cd76cc
+
+
 
 ---
 
