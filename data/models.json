@@ -41,9 +41,9 @@
             "name": "flash_sdxl",
             "model_name": "SDXL lightning 1step x0",
             "hugging_face_url": "https://huggingface.co/ByteDance/SDXL-Lightning/tree/main/sdxl_lightning_1step_x0.safetensors",
-            "download_name": "sdxl_lightning_1step_x0.safetensors",
-            "installation_path": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/models/sdxl-flash/",
-            "installation_name": "sdxl_lightning_1step_x0.safetensors"
+            "download_name": "sdxl_lightning_4step.safetensors",
+            "installation_path": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/models/sdxl-turbo/",
+            "installation_name": "sdxl_lightning_4step.safetensors"
         }
     ]
 }
