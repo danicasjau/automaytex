@@ -160,6 +160,7 @@ def uninitializePlugin(mobject):
 
 """
 import maya.cmds as cmds
+cmds.unloadPlugin('automaytex.py')
 cmds.loadPlugin('automaytex.py')
 cmds.automaytex()
 """

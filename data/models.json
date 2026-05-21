@@ -14,9 +14,9 @@
             "name": "controlnet",
             "model_name": "ControlNet Union SDXL",
             "hugging_face_url": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/blob/main/diffusion_pytorch_model_promax.safetensors",
-            "download_name": "diffusion_pytorch_model_promax.safetensors",
+            "download_name": "diffusion_pytorch_model_promaxx.safetensors",
             "installation_path": "./models/",
-            "installation_name": "diffusion_pytorch_model_promax.safetensors"
+            "installation_name": "diffusion_pytorch_model_promaxx.safetensors"
         },
         {
             "id": 3,
