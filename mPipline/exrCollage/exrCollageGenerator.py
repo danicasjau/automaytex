@@ -7,9 +7,20 @@ from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
 import numpy as np
-import OpenEXR
-import Imath
+
+# Set environment variables for the pipeline
+ENV_PATH = os.environ.get("ENV_PATH")
+sys.path.append(os.path.join(ENV_PATH, "lib", "site-packages"))
+
 from PIL import Image as PILImage
+import Imath as impMath
+
+try:
+    import OpenEXR
+except ImportError:
+    print("Error: OpenEXR library not found. Please install it to run this script.")
+
+
 
 # ---------------------------------------------------------------------------
 # ── Global configuration ────────────────────────────────────────────────────
@@ -23,7 +34,7 @@ RESIZE_TO = None        # Resize each face to N×N before tiling
 # ── Internal EXR helpers ────────────────────────────────────────────────────
 # ---------------------------------------------------------------------------
 
-_FLOAT = Imath.PixelType(Imath.PixelType.FLOAT)
+_FLOAT = impMath.PixelType(impMath.PixelType.FLOAT)
 
 def _open_exr(path: str) -> OpenEXR.InputFile:
     if not os.path.isfile(path):

@@ -1,0 +1,6 @@
+{
+    "BASE_DIR": "./automaytex",
+    "ENV_PATH": "./mEnv",
+    "SCRIPTS_PATH": "./mPipline",
+    "MODELS_PATH": "./models"
+}

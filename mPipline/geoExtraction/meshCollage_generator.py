@@ -8,14 +8,23 @@ import sys
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 import numpy as np
-import OpenEXR
-import Imath
-from PIL import Image as PILImage
 
+ENV_PATH = os.environ.get("ENV_PATH")
+sys.path.append(os.path.join(ENV_PATH, "lib", "site-packages"))
+print("-.-"*40)
+print("appended: ", os.path.join(ENV_PATH, "lib", "site-packages"))
+print("-.-"*40)
+from PIL import Image as PILImage
+import Imath as impMath
+
+try:
+    import OpenEXR
+except ImportError:
+    print("Error: OpenEXR library not found. Please install it to run this script.")
 
 DEPTH_SATURATION: float = 0.82        
 RESIZE_TO: Optional[int] = None
-_FLOAT = Imath.PixelType(Imath.PixelType.FLOAT)
+_FLOAT = impMath.PixelType(impMath.PixelType.FLOAT)
 
 
 ###########################################
@@ -326,22 +335,3 @@ class EXRCollageGenerator:
             "depth":   self.generate_depth_collage(),
             "normals": self.generate_normals_collage(),
         }
-
-
-if __name__ == "__main__":
-    images_searchPath = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\temp"
-    FACE_ORDER = ["face_0", "face_1", "face_2", "face_3"]
-    images = [os.path.join(images_searchPath, f"{face}.exr") for face in FACE_ORDER]
-    
-    gen = EXRCollageGenerator(
-        image_paths      = images,
-        save_path        = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\output",
-        depth_saturation = 0.5,
-        resize_to        = 1024,
-    )
-
-    outputs = gen.run()
-
-    print("\nOutput files:")
-    for channel, path in outputs.items():
-        print(f"  {channel:8s} → {path}")

@@ -6,6 +6,15 @@ import importlib
 import maya.api.OpenMaya as om # type:ignore
 import maya.cmds as cmds # type:ignore
 
+import os
+import sys
+
+BASE_DIR = os.environ.get("BASE_DIR")
+ENV_PATH = os.environ.get("ENV_PATH")
+
+sys.path.append(os.path.join(ENV_PATH, "lib", "site-packages"))
+sys.path.append(BASE_DIR)
+
 try:
     ################################################
     ## IMPORTING PIPELINES

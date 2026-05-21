@@ -10,8 +10,6 @@ For CUDA support, install PyTorch with CUDA:
 
 import sys
 
-# sys.path.append(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Lib\site-packages")
-
 import torch
 import os
 import math

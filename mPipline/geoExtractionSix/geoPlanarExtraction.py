@@ -346,13 +346,3 @@ class GeometryPlanarExtractor:
         print(f"  Output folder : {self.export_path}")
 
 
-
-# ==============================
-# RUN
-# ==============================
-if __name__ == "__main__":
-    extractor = GeometryPlanarExtractor(
-        export_path=r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\temp",
-        resolution=512
-    )
-    extractor.run()

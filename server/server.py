@@ -29,6 +29,8 @@ def are_models_loaded():
     print("[SERVER] Checking if models are loaded...")
     return models.are_all_loaded()
 
+
+
 @app.post("/generatetexture")
 def generate_texture(configuration: dict = Body(...)):
     print("[SERVER] Generating texture...")

@@ -109,12 +109,3 @@ class autoMaMaterial:
             cmds.warning("No objects to assign material to.")
             return
         cmds.sets(self.mObject, edit=True, forceElement=self.shading_group)
-
-
-if __name__ == "__main__":
-    mat_creator = autoMaMaterial()
-    mat_creator.mName = "myAutoMaterial"
-    mat_creator.mObject = cmds.ls(selection=True)
-    mat_creator.create()
-    mat_creator.connectImage(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\images\09.jpg", slot="diffuse")
-    mat_creator.assign_to_object()

@@ -333,7 +333,7 @@ class AdvancedSettings(QDialog):
         # General Models Path
         gen_path_lay = QHBoxLayout()
         gen_path_lay.addWidget(QLabel(f"{self.starttex} Default Install Path: "))
-        self.gen_path_input = QLineEdit("C:/models")
+        self.gen_path_input = QLineEdit(os.environ.get("MODELS_PATH"))
         gen_path_lay.addWidget(self.gen_path_input)
         btn_browse_gen = QPushButton("...")
         btn_browse_gen.setFixedWidth(30)
@@ -385,7 +385,8 @@ class AdvancedSettings(QDialog):
         """Build and add a single model row into the scroll layout."""
         model_id   = entry.get("name", "unknown")
         model_name = entry.get("model_name", model_id)
-        install_path = entry.get("installation_path", "")
+        # install_path = entry.get("installation_path", "")
+        install_path = os.environ.get("MODELS_PATH")  # Override with env var if set
         install_name = entry.get("installation_name", "")
         full_path    = os.path.join(install_path, install_name)
         hf_url       = entry.get("hugging_face_url", "")
@@ -506,8 +507,15 @@ class AdvancedSettings(QDialog):
                     except ImportError:
                         error_holder[0] = "huggingface_hub not installed. Run: pip install huggingface_hub"
                 else:
-                    # Direct file download with streaming + progress
-                    resp = _req.get(hf_url, stream=True, timeout=120)
+                    # --- FIX START ---
+                    # Convert standard browser blob URLs to raw download URLs
+                    download_url = hf_url
+                    if "/blob/" in hf_url:
+                        download_url = hf_url.replace("/blob/", "/resolve/")
+                    # --- FIX END ---
+
+                    # Direct file download with streaming + progress using the updated download_url
+                    resp = _req.get(download_url, stream=True, timeout=120)
                     resp.raise_for_status()
                     total = int(resp.headers.get("content-length", 0))
                     downloaded = 0

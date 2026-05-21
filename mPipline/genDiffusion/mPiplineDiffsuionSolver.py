@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append(r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Lib\site-packages")
 
 import os
@@ -14,7 +15,7 @@ from diffusers import StableDiffusionInpaintPipeline
 
 MODEL_CACHE   = r"M:\ai\.models\checkpoints"
 
-# SD 1.5 inpainting — ~4 GB VRAM in fp16, runs fine on RTX 4060 8 GB
+# SD 1.5 inpainting — ~4 GB VRAM in fp16
 # No ControlNets, no LoRA, no aux models.
 INPAINT_MODEL_ID = "runwayml/stable-diffusion-inpainting"
 

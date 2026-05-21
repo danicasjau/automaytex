@@ -4,7 +4,7 @@
 /temp
 /_deleted
 /_difversion
-/models
+models/*
 */__pycache__
 *.pyc
 /testoutput
