@@ -1,12 +1,12 @@
+![Alternative text description](images/logo.png)
+
+---
+
 # AutoMayTex
 
 **Diffusion texture generation for Autodesk Maya.** 
 
 AutoMayTex renders a mesh (Depth and normal map) from multiple angles, feeds the renders into a Stable Diffusion XL ControlNet pipeline, and applies the resulting PBR texture maps back onto the mesh in maya.
-
----
-
-![Alternative text description](images/logobig.png)
 
 ---
 
@@ -23,6 +23,13 @@ AutoMayTex takes a selected Autodesk Maya mesh and runs an automated diffusion p
 Everything is orchestrated from a PySide6 GUI inside Maya. The diffusion models inference runs in a separate Python venv to avoid conflicts with Maya's internal Python interpreter.
 
 The backend server (`server/server.py`) runs inside a dedicated Python virtual environment with PyTorch + Diffusers. Maya communicates with it over HTTP on `localhost:8001`. The server is started automatically by the plugin when needed.
+
+---
+
+## Examples
+
+![Alternative text description](images/examples/automaytex_example02.png)
+<video src="https://github.com/danicasjau/automaytex./images/media/demovideo.mov" width="100%" autoplay loop muted></video>
 
 ---
 
