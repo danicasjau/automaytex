@@ -667,8 +667,6 @@ class AdvancedSettings(QDialog):
     ## UTILS
     ###############################
 
-
-
     def _load_model_paths_from_json(self):
         """Load model installation paths from models.json on startup."""
         conf = configuration()

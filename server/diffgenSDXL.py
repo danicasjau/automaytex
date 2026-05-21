@@ -4,7 +4,7 @@ import torch  # type: ignore
 from PIL import Image
 
 # ── Allow a local venv to shadow system packages ──────────────────────────────
-_VENV = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\mEnv\Lib\site-packages"
+_VENV = os.path.join(os.environ.get("ENV_PATH"), r"\Lib\site-packages")
 if os.path.isdir(_VENV):
     sys.path.insert(0, _VENV)
 

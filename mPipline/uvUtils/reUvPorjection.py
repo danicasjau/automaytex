@@ -11,51 +11,7 @@ except ImportError:
 
 from PIL import Image
 
-
-# ---------------------------------------------------------------------------
-# UVRetargetTool
-# ---------------------------------------------------------------------------
-# Purpose
-# -------
-# Reprojects (bakes) textures from one UV layout (current/source, "UV2") onto
-# a stored original UV layout ("UV1") for the same piece of geometry.
-#
-# Pipeline overview
-# -----------------
-#   1. getOriginalUV()          – snapshot UV1 from the mesh
-#   2. setMaterialTextures()    – tell the tool where the source images live
-#   3. retargetToOriginalUV()   – bake UV2→UV1 and write ./output/*.png
-#
-# Mathematical foundation
-# -----------------------
-# For every triangle the mesh is parameterised twice:
-#   • T_dst  – the triangle in UV1 space  (defines where we WRITE)
-#   • T_src  – the same triangle in UV2 space (defines where we READ)
-#
-# For every pixel p that falls inside T_dst:
-#   1. Compute barycentric coords (α, β, γ) so that p = α·v0 + β·v1 + γ·v2
-#   2. Reconstruct the UV2 sample point  q = α·s0 + β·s1 + γ·s2
-#   3. Sample the source texture at q  (bilinear interpolation)
-#   4. Write the colour to the output image at p
-#
-# UDIM convention: tile = 1001 + floor(u) + 10·floor(v)
-# ---------------------------------------------------------------------------
-
 class UVRetargetTool:
-    """
-    UV texture reprojection tool for Maya meshes.
-
-    Parameters
-    ----------
-    mesh : str
-        Maya DAG path of the target mesh.
-    output_dir : str, optional
-        Directory for output textures.  Defaults to config.output_path.
-    config : object, optional
-        Configuration object.  Must expose ``output_path`` and
-        ``retarget_uv_set_name``.
-    """
-
     def __init__(self, mesh, config=None):
         if config is None:
             from config import configuration          # type: ignore[import]
@@ -79,20 +35,6 @@ class UVRetargetTool:
     # ------------------------------------------------------------------
 
     def getOriginalUV(self, uv_set: str | None = None) -> None:
-        """
-        Snapshot the current UV layout of ``self.mesh`` into
-        ``self.original_uvs`` so it can be restored later.
-
-        Stores
-        ------
-        self.original_uvs : dict
-            Keys: ``u``, ``v``          – flat UV coordinate arrays
-                  ``uvCounts``           – per-face vertex counts
-                  ``uvIds``              – per-face-vertex UV indices
-                  ``uv_set``             – name of the captured UV set
-        self.original_uv_set : str
-            Name of the captured UV set.
-        """
         if not MAYA_AVAILABLE:
             raise RuntimeError("Maya is not available in this environment.")
 
@@ -647,6 +589,7 @@ class UVRetargetTool:
           • ``p`` lies outside the triangle.
         """
         denom = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1])
+        
         if abs(denom) < 1e-10:
             return None  # degenerate / zero-area triangle
 
@@ -665,12 +608,6 @@ class UVRetargetTool:
 
     @staticmethod
     def _dilate(img: Image.Image, passes: int = 2) -> Image.Image:
-        """
-        Expand opaque pixels into transparent neighbours to cover seam gaps.
-
-        A simple box-dilation: each transparent pixel takes the average colour
-        of its opaque 4-connected neighbours.  Repeated ``passes`` times.
-        """
         import numpy as np
 
         arr = np.array(img, dtype=np.float32)  # H×W×4

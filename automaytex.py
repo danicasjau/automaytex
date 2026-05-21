@@ -1,6 +1,27 @@
-# maya automaytex plugin to load command
-# command that generates the gui correspondent
+"""
+AUTOMAYTEX - AUTOMATIC TEXTURING TOOL FOR MAYA
+Author: Daniel Casadevall
 
+AutMayTex es un plugin de Maya que serveix per a texturitzar una mesh simple, via un prompt.
+
+AutoMayTex renderitza una mesh (Depth i normal map) des de múltiples angles, 
+introdueix les imatges renderitzades en un pipeline de Stable Diffusion XL ControlNet, 
+i aplica les textures PBR resultants a la mesh a Maya.
+
+Funcionalitats clau:
+- Renderitzat de Depth i Normal maps des de múltiples angles.
+- Integració amb Stable Diffusion XL ControlNet per a generar textures PBR.
+- Aplicació automàtica de les textures generades a la mesh a Maya.
+
+Distribució dels arxius:
+- automaytex.py: Plugin principal de Maya que gestiona la integració i el workflow.
+- command.py: Conté la lògica per a iniciar la GUI i gestionar les interaccions de l'usuari.
+- config.py: Gestiona la configuració del pipeline, incloent rutes i paràmetres.
+
+- mlGui.py: la implementació de la GUI per a configurar i executar el pipeline dins de Maya.
+- mlGuiAdvanced.py: una versió avançada de la GUI amb funcionalitats addicionals per a usuaris avançats.
+
+"""
 
 ################################################
 ## IMPORTING GENERAL LIBRARIES
@@ -22,10 +43,11 @@ except ImportError:
 ## SETTING UP CONFIGURATION from CONFIGURATION FILE
 ################################################
 
-_BASE_PATH = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex"
+_BASE_PATH = r"BASE_PATH" # Set this to your project base path
 _CONFIG_PATH = os.path.join(_BASE_PATH, "data", "configuration.json")
 
 _config_data = {}
+
 try:
     if not os.path.exists(_CONFIG_PATH):
         raise FileNotFoundError(f"Config not found at {_CONFIG_PATH}")
@@ -110,7 +132,6 @@ class AutomaytexCommand(oM.MPxCommand):
         # importing command to start gui
         import command as cm
         cm.start_gui()
-
     
 ##########################################################
 # Plug-in initialization.
@@ -134,12 +155,12 @@ def uninitializePlugin(mobject):
         sys.stderr.write('Failed to unregister command: ' + AutomaytexCommand.kPluginCmdName)
 
 ##########################################################
-# Sample usage.
+# Sample maya usage
 ##########################################################
 
 """
 import maya.cmds as cmds
 cmds.unloadPlugin('automaytex.py')
-cmds.loadPlugin(r'D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\automaytex.py')
+cmds.loadPlugin('automaytex.py')
 cmds.automaytex()
 """

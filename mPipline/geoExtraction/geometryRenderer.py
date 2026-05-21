@@ -5,9 +5,6 @@ import os
 from mPipline.geoExtraction import meshCollage_generator, meshReProjectUV, meshTetrahedron_render
 
 ## UTILS
-
-
-
 class MeshRenderer:
     def __init__(self, config):
         self.conf = config
