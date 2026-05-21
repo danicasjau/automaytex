@@ -4,7 +4,7 @@
             "id": 1,
             "name": "sdxl",
             "model_name": "Juggernaut XL v9",
-            "hugging_face_url": "https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/resolve/main/juggernautXL_v9Rdphoto2Lightning.safetensors",
+            "hugging_face_url": "https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/blob/main/Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors",
             "download_name": "juggernautXL_v9Rdphoto2Lightning.safetensors",
             "installation_path": "./models/",
             "installation_name": "juggernautXL_v9Rdphoto2Lightning.safetensors"
@@ -13,16 +13,16 @@
             "id": 2,
             "name": "controlnet",
             "model_name": "ControlNet Union SDXL",
-            "hugging_face_url": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/main/diffusion_pytorch_model_promaxx.safetensors",
-            "download_name": "diffusion_pytorch_model_promaxx.safetensors",
+            "hugging_face_url": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/blob/main/diffusion_pytorch_model_promax.safetensors",
+            "download_name": "diffusion_pytorch_model_promax.safetensors",
             "installation_path": "./models/",
-            "installation_name": "diffusion_pytorch_model_promaxx.safetensors"
+            "installation_name": "diffusion_pytorch_model_promax.safetensors"
         },
         {
             "id": 3,
             "name": "depth",
             "model_name": "Depth Anything ViT-L14",
-            "hugging_face_url": "https://huggingface.co/LiheYoung/depth-anything-vitl14/tree/main",
+            "hugging_face_url": "https://huggingface.co/LiheYoung/depth_anything_vitl14/tree/main",
             "download_name": "depth_anything_vitl14",
             "installation_path": "./models/",
             "installation_name": "depth_anything_vitl14"
@@ -31,7 +31,7 @@
             "id": 4,
             "name": "fast_sdxl",
             "model_name": "SDXL lightning 4step",
-            "hugging_face_url": "https://huggingface.co/ByteDance/SDXL-Lightning/tree/main/sdxl_lightning_4step.safetensors",
+            "hugging_face_url": "https://huggingface.co/ByteDance/SDXL-Lightning/blob/main/sdxl_lightning_4step.safetensors",
             "download_name": "sdxl_lightning_4step.safetensors",
             "installation_path": "./models/",
             "installation_name": "sdxl_lightning_4step.safetensors"
@@ -40,7 +40,7 @@
             "id": 5,
             "name": "flash_sdxl",
             "model_name": "SDXL lightning 1step x0",
-            "hugging_face_url": "https://huggingface.co/ByteDance/SDXL-Lightning/tree/main/sdxl_lightning_1step_x0.safetensors",
+            "hugging_face_url": "https://huggingface.co/ByteDance/SDXL-Lightning/blob/main/sdxl_lightning_1step_x0.safetensors",
             "download_name": "sdxl_lightning_1step_x0.safetensors",
             "installation_path": "./models/",
             "installation_name": "sdxl_lightning_1step_x0.safetensors"
