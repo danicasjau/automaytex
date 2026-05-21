@@ -6,6 +6,10 @@ AutoMayTex renders a mesh (Depth and normal map) from multiple angles, feeds the
 
 ---
 
+![Alternative text description](images/logobig.png)
+
+---
+
 ## What It Does
 
 AutoMayTex takes a selected Autodesk Maya mesh and runs an automated diffusion pipeline:
@@ -22,44 +26,7 @@ The backend server (`server/server.py`) runs inside a dedicated Python virtual e
 
 ---
 
-## Supported Models
-
-AutoMayTex currently supports three SDXL-family base models:
-
-| ID | Model | Best For |
-|---|---|---|
-| `sdxl` | Juggernaut XL v9 | High quality, photo-realistic textures |
-| `fast_sdxl` | SDXL Lightning 4-step | Fast previews — **recommended steps: 4, CFG: 2.0** |
-
-All models require a **ControlNet Union SDXL** model for normal-guided generation, and a **Depth Anything ViT-L14** model for depth estimation. Model paths are configured in `data/models.json`.
-
----
-
 ## Installation
-
-### Option A — GUI Installer (Recommended)
-
-1. Run `installer/installer_gui.bat` by double-clicking it.
-2. The wizard will guide you through:
-   - Detecting your Maya installation
-   - Choosing an installation folder
-   - Cloning the repository from GitHub
-   - Optionally downloading AI models
-   - Installing Python dependencies
-   - Registering the plug-in with Maya
-3. Open Maya → **Windows → Settings/Preferences → Plug-in Manager**
-4. Find `automayatex.py`, enable **Loaded** and **Auto load**.
-
----
-
-### Option B — Command-Line Installer
-
-1. Run `installer.bat` from the repository root.
-2. Follow the interactive prompts to select your Maya version, installation path, and optional model download.
-
----
-
-### Option C — Manual Installation
 
 #### 1. Clone the repository
 
@@ -78,22 +45,9 @@ mEnv\Scripts\pip install --upgrade pip
 mEnv\Scripts\pip install -r requirements.txt
 ```
 
-> For CUDA GPU acceleration (strongly recommended), make sure you have CUDA 12.4+ installed. The `requirements.txt` already points to the correct PyTorch CUDA wheels.
+> For CUDA GPU acceleration (strongly recommended), make sure you have CUDA 12.4+ installed. The `requirements.txt` points to the PyTorch CUDA wheels.
 
-#### 3. Configure `configuration.json`
-
-Create or edit `data/configuration.json` to set your paths:
-
-```json
-{
-  "BASE_DIR": "./automaytex",
-  "ENV_PATH": "./mEnv",
-  "SCRIPTS_PATH": "./scripts",
-  "MODELS_PATH": "./models"
-}
-```
-
-These paths are loaded as environment variables by `automaytex.py` on plugin startup.
+---
 
 #### 4. Load the plugin in Maya
 
@@ -101,7 +55,7 @@ Open the **Maya Script Editor** and run:
 
 ```python
 import maya.cmds as cmds
-cmds.loadPlugin(r'automaytex.py') # use path if not detected
+cmds.loadPlugin(r'to/my/path/automaytex.py')
 cmds.automaytex()
 ```
 
@@ -110,7 +64,7 @@ To **reload** the plugin during development:
 ```python
 import maya.cmds as cmds
 cmds.unloadPlugin('automaytex.py')
-cmds.loadPlugin(r'automaytex.py')
+cmds.loadPlugin(r'to/my/path/automaytex.py')
 cmds.automaytex()
 ```
 
@@ -138,50 +92,6 @@ Or set `MAYA_PLUG_IN_PATH` permanently as a Windows environment variable, then r
 4. For each model, verify or change the **Install path**.
 5. Click **Install / Download** on any missing model — the download runs in the background with a live progress bar.
 6. Once all models are installed, go to the **Server** tab and click **Start Server**, then **Load Models**.
-
-### Manual Model Download
-
-You can also download model files manually from HuggingFace and place them in the paths configured in `data/models.json`:
-
-| Model | Source | Destination Key |
-|---|---|---|
-| Juggernaut XL v9 | [HuggingFace](https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/resolve/main/juggernautXL_v9Rdphoto2Lightning.safetensors) | `installation_path` for `sdxl` |
-| SDXL Lightning 4-step | [HuggingFace](https://huggingface.co/ByteDance/SDXL-Lightning) | `installation_path` for `fast_sdxl` |
-| ControlNet Union SDXL | [HuggingFace](https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/main/diffusion_pytorch_model_promaxx.safetensors) | `installation_path` for `controlnet` |
-| Depth Anything ViT-L14 | [HuggingFace](https://huggingface.co/LiheYoung/depth-anything-vitl14/tree/main) *(snapshot)* | `installation_path` for `depth` |
-
-After downloading, update `data/models.json` to point `installation_path` at the folder containing each file. The Depth Anything model is a full repository — use `huggingface-cli download` or `snapshot_download()`:
-
-```bash
-pip install huggingface_hub
-huggingface-cli download LiheYoung/depth-anything-vitl14 --local-dir ./models/depth_anything_vitl14
-```
-
-### Verifying Model Paths
-
-Open `data/models.json` to confirm paths are correct:
-
-```json
-{
-  "models": [
-    {
-      "name": "sdxl",
-      "installation_path": "./models/checkpoints/",
-      "installation_name": "juggernautXL_v9Rdphoto2Lightning.safetensors"
-    },
-    {
-      "name": "controlnet",
-      "installation_path": "./models/controlnet/",
-      "installation_name": "diffusion_pytorch_model_promaxx.safetensors"
-    },
-    {
-      "name": "depth",
-      "installation_path": "./models/",
-      "installation_name": "depth_anything_vitl14"
-    }
-  ]
-}
-```
 
 ---
 
