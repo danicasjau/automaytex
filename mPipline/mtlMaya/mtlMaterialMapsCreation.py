@@ -64,7 +64,7 @@ class mapsMaterialGenerator():
         }
     
     def create_diffuseMap(self, image_path):
-        if False:
+        if True:
             import backServer as bk
             print("Starting bk sending texture generation")
             bk.loadIfNotLoaded(self.config)

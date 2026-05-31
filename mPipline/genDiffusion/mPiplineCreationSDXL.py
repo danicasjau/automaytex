@@ -30,7 +30,7 @@ DEFAULT_PATHS = dict(
     base_model  = r"E:\Program Files\ComfyUI\ComfyUI\models\checkpoints\juggernautXL_v9Rdphoto2Lightning.safetensors",
     controlnet  = r"E:\Program Files\ComfyUI\ComfyUI\models\controlnet\diffusion_pytorch_model_promaxx.safetensors",
 
-    depth_model = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\models\depth_anything_vitl14",
+    depth_model = r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\models\mdepth\depth-anything-large-hf",
     vae = "",
 )
 
@@ -112,7 +112,7 @@ class ControlNetTextureGenerator:
         Mirrors ComfyUI node 55 (DepthAnythingPreprocessor).
 
         Expects a HuggingFace-style folder:
-          depth_anything_vitl14/
+          depth-anything-large-hf/
             config.json
             preprocessor_config.json
             pytorch_model.bin  (or model.safetensors)

@@ -37,7 +37,7 @@ class paths:
     # MODELS PATHSs
     diffusion_model = os.path.join(MODELS_PATH or "", "checkpoints", "juggernautXL_v9Rdphoto2Lightning.safetensors")
     controlnet_model = os.path.join(MODELS_PATH or "", "controlnet", "diffusion_pytorch_model_promaxx.safetensors")
-    depth_model = os.path.join(MODELS_PATH or "", "models", "depth_anything_vitl14")
+    depth_model = os.path.join(MODELS_PATH or "", "mdepth", "depth-anything-large-hf")
 
 
 
