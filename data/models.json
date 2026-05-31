@@ -6,7 +6,7 @@
             "model_name": "Juggernaut XL v9",
             "hugging_face_url": "https://huggingface.co/RunDiffusion/Juggernaut-XL-v9/blob/main/Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors",
             "download_name": "juggernautXL_v9Rdphoto2Lightning.safetensors",
-            "installation_path": "D:\\DANI\\PROJECTS_2026\\AutoTexturingMaya\\automaytex\\models",
+            "installation_path": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex/models",
             "installation_name": "juggernautXL_v9Rdphoto2Lightning.safetensors"
         },
         {
@@ -15,7 +15,7 @@
             "model_name": "ControlNet Union SDXL",
             "hugging_face_url": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/blob/main/diffusion_pytorch_model_promax.safetensors",
             "download_name": "diffusion_pytorch_model_promaxx.safetensors",
-            "installation_path": "D:\\DANI\\PROJECTS_2026\\AutoTexturingMaya\\automaytex\\models",
+            "installation_path": "D:/DANI/PROJECTS_2026/AutoTexturingMaya/automaytex\\models",
             "installation_name": "diffusion_pytorch_model_promaxx.safetensors"
         },
         {

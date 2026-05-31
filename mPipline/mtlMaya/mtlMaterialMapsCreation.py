@@ -1,7 +1,7 @@
 import os
 import cv2
 import numpy as np
-import backServer as bk
+
 
 class mapsMaterialGenerator():
     def __init__(self, imagesToGenerate, diffuseImagePath, normalImagePath, outputPath=None, config=None):
@@ -64,7 +64,8 @@ class mapsMaterialGenerator():
         }
     
     def create_diffuseMap(self, image_path):
-        if True:
+        if False:
+            import backServer as bk
             print("Starting bk sending texture generation")
             bk.loadIfNotLoaded(self.config)
             output = bk._generate_texture(self.config, image_path)
@@ -104,10 +105,12 @@ class mapsMaterialGenerator():
             raise ValueError(f"Could not read image: {image_path}")
             
         gray = cv2.cvtColor(diffuse, cv2.COLOR_BGR2GRAY)
-        # Assuming most generated surfaces are dielectric by default
+        
+        # Creates a black image (all zeros) with the exact same dimensions as the input
         metalness = np.zeros_like(gray)
+        
+        # Save and update class property
         cv2.imwrite(out_file, metalness)
-
         self.metalnessImagePath = out_file
 
         return out_file
@@ -121,28 +124,32 @@ class mapsMaterialGenerator():
             raise ValueError(f"Could not read height image: {image_path}")
 
         generator = PBRMapGenerator()
-        detail_normals = generator.height_to_normal(height)
-        
-        # --- Apply Gaussian Blur to Detail Normals ---
-        # (5, 5) is the kernel size; 0 lets OpenCV calculate sigma based on kernel size.
-        detail_normals = cv2.GaussianBlur(detail_normals, (5, 5), 0)
-        
-        if self.initial_normalCollageImagePath and os.path.exists(self.initial_normalCollageImagePath):
-            base_normals = cv2.imread(self.initial_normalCollageImagePath)
-            base_normals_rgb = cv2.cvtColor(base_normals, cv2.COLOR_BGR2RGB)
-            
-            BLUR_SIZE = 99
-            # --- Apply Gaussian Blur to Base Normals ---
-            base_normals_rgb = cv2.GaussianBlur(base_normals_rgb, (BLUR_SIZE, BLUR_SIZE), 0)
-            
-            target_shape = (detail_normals.shape[1], detail_normals.shape[0])
-            if base_normals_rgb.shape[:2] != detail_normals.shape[:2]:
-                base_normals_rgb = cv2.resize(base_normals_rgb, target_shape, interpolation=cv2.INTER_LINEAR)
-            
-            final_normals_rgb = generator.blend_rnm(base_normals_rgb, detail_normals)
-            final_normals = cv2.cvtColor(final_normals_rgb, cv2.COLOR_RGB2BGR)
-        else:
+
+        useDetailNormals = False
+        if useDetailNormals == False:
+            detail_normals = generator.height_to_normal(height)
+            detail_normals = cv2.GaussianBlur(detail_normals, (5, 5), 0)
             final_normals = cv2.cvtColor(detail_normals, cv2.COLOR_RGB2BGR)
+        else:
+            detail_normals = generator.height_to_normal(height)
+            detail_normals = cv2.GaussianBlur(detail_normals, (5, 5), 0)
+
+            if self.initial_normalCollageImagePath and os.path.exists(self.initial_normalCollageImagePath):
+                base_normals = cv2.imread(self.initial_normalCollageImagePath)
+                base_normals_rgb = cv2.cvtColor(base_normals, cv2.COLOR_BGR2RGB)
+                
+                BLUR_SIZE = 99
+                # --- Apply Gaussian Blur to Base Normals ---
+                base_normals_rgb = cv2.GaussianBlur(base_normals_rgb, (BLUR_SIZE, BLUR_SIZE), 0)
+                
+                target_shape = (detail_normals.shape[1], detail_normals.shape[0])
+                if base_normals_rgb.shape[:2] != detail_normals.shape[:2]:
+                    base_normals_rgb = cv2.resize(base_normals_rgb, target_shape, interpolation=cv2.INTER_LINEAR)
+                
+                final_normals_rgb = generator.blend_rnm(base_normals_rgb, detail_normals)
+                final_normals = cv2.cvtColor(final_normals_rgb, cv2.COLOR_RGB2BGR)
+            else:
+                final_normals = cv2.cvtColor(detail_normals, cv2.COLOR_RGB2BGR)
             
         cv2.imwrite(out_file, final_normals)
         self.normalImagePath = out_file
@@ -271,3 +278,11 @@ class PBRMapGenerator:
         
         return height, final_normals
 
+if __name__ == "__main__":    # Example usage
+    generator = mapsMaterialGenerator(
+        imagesToGenerate=["diffuse", "roughness", "metalness", "height", "normal"],
+        diffuseImagePath=r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\output\materialDemo\diffuseInit.png",
+        normalImagePath=r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\output\materialDemo\normalInit.png",
+        outputPath=r"D:\DANI\PROJECTS_2026\AutoTexturingMaya\automaytex\output\materialDemo\output"
+    )
+    generator.create()
